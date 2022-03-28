@@ -1,0 +1,52 @@
+name: Continious Integration Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and publish docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'
+
+      - name: Checkout project code
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: go build -v .
+
+      - name: Build and publish image
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          registry: ghcr.io
+          repository: pscheid92/dwarferl/dwarferl
+          tags: ${{ github.sha }}
+
+  deploy:
+    name: Deploy to kubernetes cluster
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy with helm
+        uses: WyriHaximus/github-action-helm3@v2
+        with:
+          kubeconfig: '${{ secrets.KUBECONFIG }}'
+          exec: >-
+            helm upgrade
+            --install
+            --namespace dwarferl
+            --set imageVersion=${{ github.sha }}
+            --values ./chart/production.yaml
+            dwarferl
+            ./chart

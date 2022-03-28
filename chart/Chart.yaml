@@ -1,0 +1,9 @@
+apiVersion: v2
+type: application
+
+name: dwarferl
+description: URL shortener
+icon: https://static.thenounproject.com/png/1551888-200.png
+
+version: 0.1.0
+appVersion: 1.16.0

@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dwarferl-route
+  namespace: dwarferl
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`gphrase.de`) && PathPrefix(`{{ trimSuffix "/" .Values.forwardedPrefix }}`)
+    kind: Rule
+    services:
+    - name: dwarferl
+      port: 8080
+  tls:
+    secretName: gphrase.de-cert-secret

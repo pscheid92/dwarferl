@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dwarferl
+spec:
+  selector:
+    app: dwarferl
+  ports:
+    - port: 8080
+  type: ClusterIP

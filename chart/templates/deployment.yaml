@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dwarferl
+  labels:
+    app: dwarferl
+spec:
+  selector:
+    matchLabels:
+      app: dwarferl
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      name: dwarferl
+      labels:
+        app: dwarferl
+    spec:
+      imagePullSecrets:
+        - name: dockerconfigjson-github-com
+      containers:
+        - name: dwarferl
+          image: "ghcr.io/pscheid92/dwarferl/dwarferl:{{ required "Set valid .Values.imageVersion entry!" .Values.imageVersion }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: GIN_MODE
+              value: {{ .Values.environment }}
+            - name: FORWARDED_PREFIX
+              value: {{ .Values.forwardedPrefix }}
+            - name: DWARFERL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: dwarferl-secret
+                  key: user
+            - name: DWARFERL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dwarferl-secret
+                  key: secret
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.forwardedPrefix }}health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
