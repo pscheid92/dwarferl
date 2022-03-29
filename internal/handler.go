@@ -13,11 +13,11 @@ func CreateHealthHandler() gin.HandlerFunc {
 	}
 }
 
-func CreateGetHandler(shortener UrlShortener) gin.HandlerFunc {
+func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 
-		expand, err := shortener.Expand(short)
+		expand, err := shortener.ExpandShortURL(short)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Redirect not found"})
 		}
@@ -26,7 +26,7 @@ func CreateGetHandler(shortener UrlShortener) gin.HandlerFunc {
 	}
 }
 
-func CreatePostHandler(shortener UrlShortener) gin.HandlerFunc {
+func CreatePostHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request RedirectCreationRequest
 		err := c.BindJSON(&request)
@@ -39,7 +39,7 @@ func CreatePostHandler(shortener UrlShortener) gin.HandlerFunc {
 			return
 		}
 
-		short, err := shortener.Shorten(request.Url)
+		short, err := shortener.ShortenURL(request.Url)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Internal server error"})
 			return
@@ -49,11 +49,11 @@ func CreatePostHandler(shortener UrlShortener) gin.HandlerFunc {
 	}
 }
 
-func CreateDeleteHandler(shortener UrlShortener) gin.HandlerFunc {
+func CreateDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 
-		err := shortener.Delete(short)
+		err := shortener.DeleteShortURL(short)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Redirect not found"})
 		}

@@ -1,37 +1,31 @@
 package internal
 
-import (
-	"errors"
-	"github.com/jxskiss/base62"
-	"hash/fnv"
-)
+import "errors"
 
-type UrlShortener struct {
-	storage Storage
+type UrlShortenerService struct {
+	hasher    Hasher
+	redirects RedirectRepository
 }
 
-func NewUrlShortener(storage Storage) UrlShortener {
-	return UrlShortener{storage: storage}
+func NewUrlShortenerService(hasher Hasher, redirects RedirectRepository) UrlShortenerService {
+	return UrlShortenerService{
+		hasher:    hasher,
+		redirects: redirects,
+	}
 }
 
-func (u UrlShortener) Shorten(url string) (string, error) {
-	hash := fnv.New32a()
-	hash.Write([]byte(url))
-	hashed := hash.Sum32()
+func (u UrlShortenerService) ShortenURL(url string) (string, error) {
+	short := u.hasher(url)
 
-	bytes := base62.FormatUint(uint64(hashed))
-	short := string(bytes)
-
-	err := u.storage.SaveRedirect(short, url)
-	if err != nil {
+	if err := u.redirects.Save(short, url); err != nil {
 		return "", err
 	}
 
 	return short, nil
 }
 
-func (u UrlShortener) Expand(short string) (string, error) {
-	url, ok := u.storage.ExpandRedirect(short)
+func (u UrlShortenerService) ExpandShortURL(short string) (string, error) {
+	url, ok := u.redirects.Expand(short)
 	if !ok {
 		return "", errors.New("not found")
 	}
@@ -39,6 +33,6 @@ func (u UrlShortener) Expand(short string) (string, error) {
 	return url, nil
 }
 
-func (u UrlShortener) Delete(short string) error {
-	return u.storage.DeleteRedirect(short)
+func (u UrlShortenerService) DeleteShortURL(short string) error {
+	return u.redirects.Delete(short)
 }

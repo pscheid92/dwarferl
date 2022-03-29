@@ -12,8 +12,8 @@ func main() {
 	accounts := getBasicAuthAccounts()
 	forwardedPrefix := prepareForwardedPrefix()
 
-	storage := internal.NewInMemoryStorage()
-	shortener := internal.NewUrlShortener(storage)
+	redirectsRepository := internal.NewInMemoryRedirectRepository()
+	shortener := internal.NewUrlShortenerService(internal.UrlHasher, redirectsRepository)
 
 	r := gin.Default()
 	r.RedirectTrailingSlash = false
