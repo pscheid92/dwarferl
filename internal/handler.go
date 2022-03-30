@@ -20,6 +20,7 @@ func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 		expand, err := shortener.ExpandShortURL(short)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Redirect not found"})
+			return
 		}
 
 		c.Redirect(302, expand)
@@ -56,6 +57,7 @@ func CreateDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
 		err := shortener.DeleteShortURL(short)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Redirect not found"})
+			return
 		}
 
 		c.JSON(200, gin.H{"success": "Redirect deleted"})

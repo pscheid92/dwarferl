@@ -1,5 +1,7 @@
 package internal
 
+import "errors"
+
 type RedirectRepository interface {
 	Save(short string, url string) error
 	Expand(short string) (string, bool)
@@ -27,6 +29,9 @@ func (i InMemoryRedirectRepository) Expand(short string) (string, bool) {
 }
 
 func (i InMemoryRedirectRepository) Delete(short string) error {
+	if _, ok := i.redirects[short]; !ok {
+		return errors.New("not found")
+	}
 	delete(i.redirects, short)
 	return nil
 }
