@@ -14,12 +14,12 @@ func TestUrlHasher(t *testing.T) {
 		{
 			DummyUser,
 			"https://www.google.com",
-			"l6NzT",
+			"hYhahA",
 		},
 		{
 			DummyUser,
 			"https://patrickscheid.de",
-			"BkO7qx",
+			"5fLDtC",
 		},
 	}
 

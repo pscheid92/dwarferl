@@ -11,8 +11,7 @@ func UrlHasher(user User, url string) string {
 	hash := fnv.New32a()
 	_, _ = hash.Write([]byte(url))
 	_, _ = hash.Write([]byte(user.ID.String()))
-	hashed := hash.Sum32()
+	hashed := hash.Sum([]byte{})
 
-	bytes := base62.FormatUint(uint64(hashed))
-	return string(bytes)
+	return base62.EncodeToString(hashed)
 }
