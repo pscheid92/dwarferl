@@ -11,17 +11,20 @@ import (
 )
 
 func setupTest() (*redirectRepoFake, *UrlShortenerService, *gin.Engine) {
-	staticHasher := func(string) string { return "short" }
+	staticHasher := func(_ User, _ string) string { return "short" }
 
-	repo := NewInMemoryRedirectRepository()
-	mock := redirectRepoFake{repo: repo, FailMode: false}
-	svc := NewUrlShortenerService(staticHasher, &mock)
+	redirects := NewInMemoryRedirectRepository()
+	redirectsMock := redirectRepoFake{repo: redirects, FailMode: false}
+
+	users := StaticUsersRepository{}
+
+	svc := NewUrlShortenerService(staticHasher, &redirectsMock, users)
 
 	gin.SetMode(gin.TestMode)
 	accounts := gin.Accounts{"test": "test"}
 	router := SetupRoutes(gin.New(), "/", svc, accounts)
 
-	return &mock, &svc, router
+	return &redirectsMock, &svc, router
 }
 
 func executeCall(router *gin.Engine, method string, url string, body string) *httptest.ResponseRecorder {

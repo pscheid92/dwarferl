@@ -7,21 +7,24 @@ import (
 
 func TestUrlHasher(t *testing.T) {
 	tt := []struct {
+		user  User
 		url   string
 		short string
 	}{
 		{
+			DummyUser,
 			"https://www.google.com",
-			"CdhQjT",
+			"l6NzT",
 		},
 		{
+			DummyUser,
 			"https://patrickscheid.de",
-			"D7QWOh",
+			"BkO7qx",
 		},
 	}
 
 	for _, c := range tt {
-		result := UrlHasher(c.url)
-		assert.Equalf(t, c.short, result, "UrlHasher(%s) should be %s, but is %s", c.url, c.short, result)
+		result := UrlHasher(c.user, c.url)
+		assert.Equalf(t, c.short, result, "UrlHasher(%v, %s) should be %s, but is %s", c.user, c.url, c.short, result)
 	}
 }

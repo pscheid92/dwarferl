@@ -13,7 +13,8 @@ func main() {
 	forwardedPrefix := prepareForwardedPrefix()
 
 	redirectsRepository := internal.NewInMemoryRedirectRepository()
-	shortener := internal.NewUrlShortenerService(internal.UrlHasher, redirectsRepository)
+	usersRepository := internal.StaticUsersRepository{}
+	shortener := internal.NewUrlShortenerService(internal.UrlHasher, redirectsRepository, usersRepository)
 
 	r := gin.Default()
 	r = internal.SetupRoutes(gin.Default(), forwardedPrefix, shortener, accounts)

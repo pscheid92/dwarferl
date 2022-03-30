@@ -57,11 +57,15 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 }
 
 func setupService() (*redirectRepoFake, *UrlShortenerService) {
-	hasher := func(_ string) string { return "short" }
-	repo := NewInMemoryRedirectRepository()
-	mock := &redirectRepoFake{repo: repo, FailMode: false}
-	svc := NewUrlShortenerService(hasher, mock)
-	return mock, &svc
+	hasher := func(_ User, _ string) string { return "short" }
+
+	redirects := NewInMemoryRedirectRepository()
+	redirectsMock := &redirectRepoFake{repo: redirects, FailMode: false}
+
+	users := StaticUsersRepository{}
+
+	svc := NewUrlShortenerService(hasher, redirectsMock, users)
+	return redirectsMock, &svc
 }
 
 type redirectRepoFake struct {
