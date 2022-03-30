@@ -1,6 +1,9 @@
 package internal
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
 
 type RedirectCreationRequest struct {
 	Url string `json:"url"`
@@ -8,7 +11,7 @@ type RedirectCreationRequest struct {
 
 func CreateHealthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Status(200)
+		c.Status(http.StatusOK)
 		return
 	}
 }
@@ -19,11 +22,11 @@ func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 
 		expand, err := shortener.ExpandShortURL(short)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Redirect not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found"})
 			return
 		}
 
-		c.Redirect(301, expand)
+		c.Redirect(http.StatusMovedPermanently, expand)
 	}
 }
 
@@ -36,17 +39,17 @@ func CreatePostHandler(shortener UrlShortenerService) gin.HandlerFunc {
 		}
 
 		if request.Url == "" {
-			c.JSON(400, gin.H{"error": "Url is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Url is required"})
 			return
 		}
 
 		short, err := shortener.ShortenURL(request.Url)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Internal server error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
-		c.JSON(201, gin.H{"short": short})
+		c.JSON(http.StatusCreated, gin.H{"short": short})
 	}
 }
 
@@ -56,10 +59,10 @@ func CreateDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
 
 		err := shortener.DeleteShortURL(short)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Redirect not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found"})
 			return
 		}
 
-		c.JSON(200, gin.H{"success": "Redirect deleted"})
+		c.JSON(http.StatusOK, gin.H{"success": "Redirect deleted"})
 	}
 }
