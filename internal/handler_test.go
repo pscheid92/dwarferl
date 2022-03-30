@@ -55,8 +55,16 @@ func TestCreateGetHandler(t *testing.T) {
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	w = executeCall(router, "GET", "/"+short, "")
+
+	location := w.Header().Get("Location")
+	cacheControl := w.Header().Get("Cache-Control")
+	referrerPolicy := w.Header().Get("Referrer-Policy")
+
 	assert.Equalf(t, http.StatusMovedPermanently, w.Code, "Expected status code to be 301, got %d", w.Code)
-	assert.Equalf(t, url, w.Header().Get("Location"), "Expected location header to be %s, got %s", url, w.Header().Get("Location"))
+	assert.Equalf(t, url, location, "Expected location header to be %s, got %s", url, location)
+	assert.Containsf(t, cacheControl, "private", "Expected cache-control header to contain private, got %s", cacheControl)
+	assert.Containsf(t, cacheControl, "max-age", "Expected cache-control header to contain max-age, got %s", cacheControl)
+	assert.Equalf(t, "unsafe-url", referrerPolicy, "Expected referrer-policy header to be unsafe-url, got %s", referrerPolicy)
 }
 
 func TestCreatePostHandler(t *testing.T) {

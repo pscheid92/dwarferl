@@ -26,6 +26,8 @@ func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 			return
 		}
 
+		c.Header("Cache-Control", "private, max-age=90")
+		c.Header("Referrer-Policy", "unsafe-url")
 		c.Redirect(http.StatusMovedPermanently, expand)
 	}
 }
