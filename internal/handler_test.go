@@ -10,11 +10,11 @@ import (
 	"testing"
 )
 
-func setupTest() (*repoMock, *UrlShortenerService, *gin.Engine) {
+func setupTest() (*redirectRepoFake, *UrlShortenerService, *gin.Engine) {
 	staticHasher := func(string) string { return "short" }
 
 	repo := NewInMemoryRedirectRepository()
-	mock := repoMock{repo: repo, FailMode: false}
+	mock := redirectRepoFake{repo: repo, FailMode: false}
 	svc := NewUrlShortenerService(staticHasher, &mock)
 
 	gin.SetMode(gin.TestMode)

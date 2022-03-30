@@ -12,11 +12,11 @@ func TestUrlShortenerService_ShortenURL(t *testing.T) {
 
 	short, err := sut.ShortenURL(url)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
-	assert.Equalf(t, url, short, "Expected short to be %v, got %v", url, short)
+	assert.Equalf(t, "short", short, "Expected short to be short, got %v", short)
 
 	expanded, ok := repo.Expand(short)
 	assert.Truef(t, ok, "Expected to find %s in the repo", short)
-	assert.Equalf(t, url, expanded, "Expected %s to be expanded to %s, got %s", short, url, expanded)
+	assert.Equalf(t, url, expanded, "Expected short to be expanded to %s, got %s", url, expanded)
 
 	repo.FailMode = true
 	_, err = sut.ShortenURL(url)
@@ -56,37 +56,34 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 	assert.Falsef(t, ok, "Expected to not find %s in the repo", short)
 }
 
-func noOpHasher(input string) string {
-	return input
-}
-
-func setupService() (*repoMock, *UrlShortenerService) {
+func setupService() (*redirectRepoFake, *UrlShortenerService) {
+	hasher := func(_ string) string { return "short" }
 	repo := NewInMemoryRedirectRepository()
-	mock := &repoMock{repo: repo, FailMode: false}
-	svc := NewUrlShortenerService(noOpHasher, mock)
+	mock := &redirectRepoFake{repo: repo, FailMode: false}
+	svc := NewUrlShortenerService(hasher, mock)
 	return mock, &svc
 }
 
-type repoMock struct {
+type redirectRepoFake struct {
 	repo     *InMemoryRedirectRepository
 	FailMode bool
 }
 
-func (r repoMock) Save(short string, url string) error {
+func (r redirectRepoFake) Save(short string, url string) error {
 	if r.FailMode {
 		return errors.New("mock error")
 	}
 	return r.repo.Save(short, url)
 }
 
-func (r repoMock) Expand(short string) (string, bool) {
+func (r redirectRepoFake) Expand(short string) (string, bool) {
 	if r.FailMode {
 		return "", false
 	}
 	return r.repo.Expand(short)
 }
 
-func (r repoMock) Delete(short string) error {
+func (r redirectRepoFake) Delete(short string) error {
 	if r.FailMode {
 		return errors.New("mock error")
 	}
