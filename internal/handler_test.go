@@ -9,15 +9,21 @@ import (
 	"testing"
 )
 
-func setupStaticHasher(fixed string) Hasher {
-	return func(string) string {
-		return fixed
-	}
+func setupTest() (*repoMock, *UrlShortenerService, *gin.Engine) {
+	staticHasher := func(string) string { return "short" }
+
+	repo := NewInMemoryRedirectRepository()
+	mock := repoMock{repo: repo, FailMode: false}
+	svc := NewUrlShortenerService(staticHasher, &mock)
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	return &mock, &svc, router
 }
 
 func TestCreateHealthHandler(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
+	_, _, router := setupTest()
 	router.GET("/health", CreateHealthHandler())
 
 	w := httptest.NewRecorder()
@@ -29,12 +35,8 @@ func TestCreateHealthHandler(t *testing.T) {
 
 func TestCreateGetHandler(t *testing.T) {
 	url := "https://www.google.com"
-	repo := NewInMemoryRedirectRepository()
-	svc := NewUrlShortenerService(setupStaticHasher("short"), repo)
-
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.GET("/:short", CreateGetHandler(svc))
+	_, svc, router := setupTest()
+	router.GET("/:short", CreateGetHandler(*svc))
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/nonexistent", nil)
@@ -52,13 +54,8 @@ func TestCreateGetHandler(t *testing.T) {
 }
 
 func TestCreatePostHandler(t *testing.T) {
-	repo := NewInMemoryRedirectRepository()
-	mock := &repoMock{repo: repo, FailMode: false}
-	svc := NewUrlShortenerService(setupStaticHasher("short"), mock)
-
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.POST("/", CreatePostHandler(svc))
+	repo, svc, router := setupTest()
+	router.POST("/", CreatePostHandler(*svc))
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
@@ -80,19 +77,15 @@ func TestCreatePostHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	body = bytes.NewBuffer([]byte(`{"url": "https://www.google.com"}`))
 	req, _ = http.NewRequest("POST", "/", body)
-	mock.FailMode = true
+	repo.FailMode = true
 	router.ServeHTTP(w, req)
 	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 }
 
 func TestCreateDeleteHandler(t *testing.T) {
 	url := "https://www.google.com"
-	repo := NewInMemoryRedirectRepository()
-	svc := NewUrlShortenerService(setupStaticHasher("short"), repo)
-
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.DELETE("/:short", CreateDeleteHandler(svc))
+	_, svc, router := setupTest()
+	router.DELETE("/:short", CreateDeleteHandler(*svc))
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/nonexistent", nil)
