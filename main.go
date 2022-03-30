@@ -16,17 +16,7 @@ func main() {
 	shortener := internal.NewUrlShortenerService(internal.UrlHasher, redirectsRepository)
 
 	r := gin.Default()
-	r.RedirectTrailingSlash = false
-
-	g := r.Group(forwardedPrefix)
-	g.GET("/health", internal.CreateHealthHandler())
-	g.GET("/:short", internal.CreateGetHandler(shortener))
-
-	authorized := g.Group("", gin.BasicAuth(accounts))
-	{
-		authorized.POST("/", internal.CreatePostHandler(shortener))
-		authorized.DELETE("/:short", internal.CreateDeleteHandler(shortener))
-	}
+	r = internal.SetupRoutes(gin.Default(), forwardedPrefix, shortener, accounts)
 
 	if err := r.Run(); err != nil {
 		log.Fatalf("error starting server: %v", err)

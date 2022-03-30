@@ -5,18 +5,34 @@ import (
 	"net/http"
 )
 
+func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener UrlShortenerService, accounts gin.Accounts) *gin.Engine {
+	router.RedirectTrailingSlash = false
+
+	g := router.Group(forwardedPrefix)
+	g.GET("/health", createHealthHandler())
+	g.GET("/:short", createGetHandler(shortener))
+
+	authorized := g.Group("", gin.BasicAuth(accounts))
+	{
+		authorized.POST("/", createPostHandler(shortener))
+		authorized.DELETE("/:short", createDeleteHandler(shortener))
+	}
+
+	return router
+}
+
 type RedirectCreationRequest struct {
 	Url string `json:"url"`
 }
 
-func CreateHealthHandler() gin.HandlerFunc {
+func createHealthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Status(http.StatusOK)
 		return
 	}
 }
 
-func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 
@@ -32,7 +48,7 @@ func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func CreatePostHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createPostHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request RedirectCreationRequest
 		err := c.BindJSON(&request)
@@ -55,7 +71,7 @@ func CreatePostHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func CreateDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 

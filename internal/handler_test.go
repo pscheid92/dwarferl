@@ -18,7 +18,8 @@ func setupTest() (*redirectRepoFake, *UrlShortenerService, *gin.Engine) {
 	svc := NewUrlShortenerService(staticHasher, &mock)
 
 	gin.SetMode(gin.TestMode)
-	router := gin.New()
+	accounts := gin.Accounts{"test": "test"}
+	router := SetupRoutes(gin.New(), "/", svc, accounts)
 
 	return &mock, &svc, router
 }
@@ -31,14 +32,13 @@ func executeCall(router *gin.Engine, method string, url string, body string) *ht
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, reader)
+	req.SetBasicAuth("test", "test")
 	router.ServeHTTP(w, req)
 	return w
 }
 
 func TestCreateHealthHandler(t *testing.T) {
 	_, _, router := setupTest()
-	router.GET("/health", CreateHealthHandler())
-
 	w := executeCall(router, "GET", "/health", "")
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
 }
@@ -46,7 +46,6 @@ func TestCreateHealthHandler(t *testing.T) {
 func TestCreateGetHandler(t *testing.T) {
 	url := "https://www.google.com"
 	_, svc, router := setupTest()
-	router.GET("/:short", CreateGetHandler(*svc))
 
 	w := executeCall(router, "GET", "/nonexistent", "")
 	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
@@ -68,8 +67,7 @@ func TestCreateGetHandler(t *testing.T) {
 }
 
 func TestCreatePostHandler(t *testing.T) {
-	repo, svc, router := setupTest()
-	router.POST("/", CreatePostHandler(*svc))
+	repo, _, router := setupTest()
 
 	w := executeCall(router, "POST", "/", "")
 	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
@@ -88,7 +86,6 @@ func TestCreatePostHandler(t *testing.T) {
 func TestCreateDeleteHandler(t *testing.T) {
 	url := "https://www.google.com"
 	_, svc, router := setupTest()
-	router.DELETE("/:short", CreateDeleteHandler(*svc))
 
 	w := executeCall(router, "DELETE", "/nonexistent", "")
 	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
