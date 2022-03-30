@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -10,24 +11,16 @@ func TestUrlShortenerService_ShortenURL(t *testing.T) {
 	repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
+	assert.Equalf(t, url, short, "Expected short to be %v, got %v", url, short)
 
-	if short != url {
-		t.Errorf("Expected short to be %s, got %s", short, url)
-	}
-
-	if expanded, ok := repo.Expand(short); !ok {
-		t.Errorf("Expected to find %s in the repo", short)
-	} else if expanded != url {
-		t.Errorf("Expected %s to be expanded to %s, got %s", short, url, expanded)
-	}
+	expanded, ok := repo.Expand(short)
+	assert.Truef(t, ok, "Expected to find %s in the repo", short)
+	assert.Equalf(t, url, expanded, "Expected %s to be expanded to %s, got %s", short, url, expanded)
 
 	repo.FailMode = true
-	if _, err = sut.ShortenURL(url); err == nil {
-		t.Errorf("Expected error, got nil")
-	}
+	_, err = sut.ShortenURL(url)
+	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
@@ -35,23 +28,15 @@ func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 	repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	expanded, err := sut.ExpandShortURL(short)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
-
-	if expanded != url {
-		t.Errorf("Expected %s to be expanded to %s, got %s", short, url, expanded)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
+	assert.Equalf(t, url, expanded, "Expected %s to be expanded to %s, got %s", short, url, expanded)
 
 	repo.FailMode = true
-	if _, err = sut.ExpandShortURL(short); err == nil {
-		t.Errorf("Expected error, got nil")
-	}
+	_, err = sut.ExpandShortURL(short)
+	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
@@ -59,23 +44,16 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 	repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	_, ok := repo.Expand(short)
-	if !ok {
-		t.Errorf("Expected to find %s in the repo", short)
-	}
+	assert.Truef(t, ok, "Expected to find %s in the repo", short)
 
 	err = sut.DeleteShortURL(short)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
-	if _, ok = repo.Expand(short); ok {
-		t.Errorf("Expected to not find %s in the repo", short)
-	}
+	_, ok = repo.Expand(short)
+	assert.Falsef(t, ok, "Expected to not find %s in the repo", short)
 }
 
 func noOpHasher(input string) string {

@@ -1,6 +1,9 @@
 package internal
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestUrlHasher(t *testing.T) {
 	tt := []struct {
@@ -19,8 +22,6 @@ func TestUrlHasher(t *testing.T) {
 
 	for _, c := range tt {
 		result := UrlHasher(c.url)
-		if result != c.short {
-			t.Errorf("UrlHasher(%s) == %s, want %s", c.url, result, c.short)
-		}
+		assert.Equalf(t, c.short, result, "UrlHasher(%s) should be %s, but is %s", c.url, c.short, result)
 	}
 }

@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,9 +24,7 @@ func TestCreateHealthHandler(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/health", nil)
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code to be 200, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
 }
 
 func TestCreateGetHandler(t *testing.T) {
@@ -40,24 +39,16 @@ func TestCreateGetHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/nonexistent", nil)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusNotFound {
-		t.Errorf("Expected status code to be 404, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
 	short, err := svc.ShortenURL(url)
-	if err != nil {
-		t.Error("Expected no error, got: ", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/"+short, nil)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusFound {
-		t.Errorf("Expected status code to be 302, got: %d", w.Code)
-	}
-	if w.Header().Get("Location") != url {
-		t.Errorf("Expected Location header to be %s, got: %s", url, w.Header().Get("Location"))
-	}
+	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
+	assert.Equalf(t, url, w.Header().Get("Location"), "Expected location header to be %s, got %s", url, w.Header().Get("Location"))
 }
 
 func TestCreatePostHandler(t *testing.T) {
@@ -72,34 +63,26 @@ func TestCreatePostHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status code to be 400, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
 
 	w = httptest.NewRecorder()
 	body := bytes.NewBuffer([]byte(`{}`))
 	req, _ = http.NewRequest("POST", "/", body)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status code to be 400, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
 
 	w = httptest.NewRecorder()
 	body = bytes.NewBuffer([]byte(`{"url": "https://www.google.com"}`))
 	req, _ = http.NewRequest("POST", "/", body)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusCreated {
-		t.Errorf("Expected status code to be 201, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusCreated, w.Code, "Expected status code to be 201, got %d", w.Code)
 
 	w = httptest.NewRecorder()
 	body = bytes.NewBuffer([]byte(`{"url": "https://www.google.com"}`))
 	req, _ = http.NewRequest("POST", "/", body)
 	mock.FailMode = true
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Expected status code to be 500, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 }
 
 func TestCreateDeleteHandler(t *testing.T) {
@@ -114,19 +97,13 @@ func TestCreateDeleteHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/nonexistent", nil)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusNotFound {
-		t.Errorf("Expected status code to be 404, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
 	_, err := svc.ShortenURL(url)
-	if err != nil {
-		t.Error("Expected no error, got: ", err)
-	}
+	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", "/short", nil)
 	router.ServeHTTP(w, req)
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code to be 200, got: %d", w.Code)
-	}
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
 }
