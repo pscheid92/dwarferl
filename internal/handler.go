@@ -23,7 +23,7 @@ func CreateGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 			return
 		}
 
-		c.Redirect(302, expand)
+		c.Redirect(301, expand)
 	}
 }
 

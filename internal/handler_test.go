@@ -55,7 +55,7 @@ func TestCreateGetHandler(t *testing.T) {
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
 	w = executeCall(router, "GET", "/"+short, "")
-	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
+	assert.Equalf(t, http.StatusMovedPermanently, w.Code, "Expected status code to be 301, got %d", w.Code)
 	assert.Equalf(t, url, w.Header().Get("Location"), "Expected location header to be %s, got %s", url, w.Header().Get("Location"))
 }
 
