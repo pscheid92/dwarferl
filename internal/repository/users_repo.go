@@ -9,7 +9,7 @@ type StaticUsersRepository struct {
 	// EMPTY
 }
 
-func (s StaticUsersRepository) Get() (internal.User, error) {
+func (s StaticUsersRepository) Get(_ string) (internal.User, error) {
 	user := internal.User{
 		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
 		Email: "example@example.com",

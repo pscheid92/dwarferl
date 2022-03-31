@@ -10,16 +10,18 @@ type User struct {
 }
 
 type UsersRepository interface {
-	Get() (User, error)
+	Get(id string) (User, error)
 }
 
 type RedirectRepository interface {
+	List(User) (map[string]string, error)
 	Save(short string, url string) error
 	Expand(short string) (string, bool)
 	Delete(short string) error
 }
 
 type UrlShortenerService interface {
+	List(userID string) (map[string]string, error)
 	ShortenURL(url string) (string, error)
 	ExpandShortURL(short string) (string, error)
 	DeleteShortURL(short string) error

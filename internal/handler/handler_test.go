@@ -36,6 +36,17 @@ func TestCreateGetHandler(t *testing.T) {
 	assert.Equalf(t, "unsafe-url", referrerPolicy, "Expected referrer-policy header to be unsafe-url, got %s", referrerPolicy)
 }
 
+func TestCreateListHandler(t *testing.T) {
+	svc, router := setupTest()
+
+	w := executeCall(router, "GET", "/", "")
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
+
+	svc.FailMode = true
+	w = executeCall(router, "GET", "/", "")
+	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
+}
+
 func TestCreatePostHandler(t *testing.T) {
 	svc, router := setupTest()
 
@@ -86,6 +97,7 @@ func executeCall(router *gin.Engine, method string, url string, body string) *ht
 	return w
 }
 
+const testUser = "user1"
 const testShort = "short"
 const testURL = "https://www.google.com"
 
@@ -95,6 +107,18 @@ type urlShortenerServiceFake struct {
 
 func newShortenerServiceFake() *urlShortenerServiceFake {
 	return &urlShortenerServiceFake{FailMode: false}
+}
+
+func (s urlShortenerServiceFake) List(userID string) (map[string]string, error) {
+	if s.FailMode {
+		return nil, errors.New("fake error")
+	}
+
+	if userID != testUser {
+		return nil, errors.New("user not found")
+	}
+
+	return map[string]string{testShort: testURL}, nil
 }
 
 func (s urlShortenerServiceFake) ShortenURL(url string) (string, error) {

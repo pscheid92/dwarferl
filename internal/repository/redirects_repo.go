@@ -1,6 +1,9 @@
 package repository
 
-import "errors"
+import (
+	"errors"
+	"github.com/pscheid92/dwarferl/internal"
+)
 
 type InMemoryRedirectRepository struct {
 	redirects map[string]string
@@ -10,6 +13,10 @@ func NewInMemoryRedirectRepository() *InMemoryRedirectRepository {
 	return &InMemoryRedirectRepository{
 		redirects: make(map[string]string),
 	}
+}
+
+func (i InMemoryRedirectRepository) List(user internal.User) (map[string]string, error) {
+	return i.redirects, nil
 }
 
 func (i InMemoryRedirectRepository) Save(short string, url string) error {

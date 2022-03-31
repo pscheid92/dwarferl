@@ -15,6 +15,7 @@ func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.
 
 	authorized := g.Group("", gin.BasicAuth(accounts))
 	{
+		authorized.GET("/", createListHandler(shortener))
 		authorized.POST("/", createPostHandler(shortener))
 		authorized.DELETE("/:short", createDeleteHandler(shortener))
 	}
@@ -46,6 +47,18 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 		c.Header("Cache-Control", "private, max-age=90")
 		c.Header("Referrer-Policy", "unsafe-url")
 		c.Redirect(http.StatusMovedPermanently, expand)
+	}
+}
+
+func createListHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		list, err := shortener.List("user1")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+
+		c.JSON(http.StatusOK, list)
 	}
 }
 

@@ -8,9 +8,25 @@ import (
 	"testing"
 )
 
+func TestUrlShortenerService_List(t *testing.T) {
+	users, redirects, sut := setupService()
+
+	list, err := sut.List("user1")
+	assert.NoErrorf(t, err, "list should not return error")
+	assert.Emptyf(t, list, "list should return empty list")
+
+	redirects.FailMode = true
+	_, err = sut.List("user1")
+	assert.Errorf(t, err, "Expected error, got nil")
+
+	users.FailMode = true
+	_, err = sut.List("user1")
+	assert.Errorf(t, err, "Expected error, got nil")
+}
+
 func TestUrlShortenerService_ShortenURL(t *testing.T) {
 	url := "https://www.google.com"
-	repo, sut := setupService()
+	_, repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
@@ -27,7 +43,7 @@ func TestUrlShortenerService_ShortenURL(t *testing.T) {
 
 func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 	url := "https://www.google.com"
-	repo, sut := setupService()
+	_, repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
@@ -43,7 +59,7 @@ func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 
 func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 	url := "https://www.google.com"
-	repo, sut := setupService()
+	_, repo, sut := setupService()
 
 	short, err := sut.ShortenURL(url)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
@@ -58,14 +74,14 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 	assert.Falsef(t, ok, "Expected to not find %s in the repo", short)
 }
 
-func setupService() (*redirectRepoFake, *UrlShortenerService) {
+func setupService() (*usersRepoFake, *redirectRepoFake, *UrlShortenerService) {
 	hasher := func(_ internal.User, _ string) string { return "short" }
 
 	redirects := newRedirectRepoFake()
 	users := newUsersRepoFake()
 
 	svc := NewUrlShortenerService(hasher, redirects, users)
-	return redirects, &svc
+	return users, redirects, &svc
 }
 
 type redirectRepoFake struct {
@@ -80,9 +96,16 @@ func newRedirectRepoFake() *redirectRepoFake {
 	}
 }
 
+func (r redirectRepoFake) List(_ internal.User) (map[string]string, error) {
+	if r.FailMode {
+		return nil, errors.New("fake error")
+	}
+	return r.redirects, nil
+}
+
 func (r redirectRepoFake) Save(short string, url string) error {
 	if r.FailMode {
-		return errors.New("mock error")
+		return errors.New("fake error")
 	}
 	r.redirects[short] = url
 	return nil
@@ -98,7 +121,7 @@ func (r redirectRepoFake) Expand(short string) (string, bool) {
 
 func (r redirectRepoFake) Delete(short string) error {
 	if r.FailMode {
-		return errors.New("mock error")
+		return errors.New("fake error")
 	}
 	if _, ok := r.redirects[short]; !ok {
 		return errors.New("not found")
@@ -108,14 +131,18 @@ func (r redirectRepoFake) Delete(short string) error {
 }
 
 type usersRepoFake struct {
-	// EMPTY
+	FailMode bool
 }
 
 func newUsersRepoFake() *usersRepoFake {
-	return &usersRepoFake{}
+	return &usersRepoFake{FailMode: false}
 }
 
-func (u usersRepoFake) Get() (internal.User, error) {
+func (u usersRepoFake) Get(string) (internal.User, error) {
+	if u.FailMode {
+		return internal.User{}, errors.New("fake error")
+	}
+
 	user := internal.User{
 		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
 		Email: "example@example.com",

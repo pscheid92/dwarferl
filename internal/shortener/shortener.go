@@ -19,8 +19,22 @@ func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectR
 	}
 }
 
+func (u UrlShortenerService) List(userID string) (map[string]string, error) {
+	user, err := u.users.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := u.redirects.List(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
 func (u UrlShortenerService) ShortenURL(url string) (string, error) {
-	user, _ := u.users.Get()
+	user, _ := u.users.Get("")
 	short := u.hasher(user, url)
 
 	if err := u.redirects.Save(short, url); err != nil {
