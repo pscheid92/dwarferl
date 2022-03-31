@@ -1,7 +1,8 @@
-package internal
+package handler
 
 import (
 	"bytes"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -10,21 +11,66 @@ import (
 	"testing"
 )
 
-func setupTest() (*redirectRepoFake, *UrlShortenerService, *gin.Engine) {
-	staticHasher := func(_ User, _ string) string { return "short" }
+func TestCreateHealthHandler(t *testing.T) {
+	_, router := setupTest()
+	w := executeCall(router, "GET", "/health", "")
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
+}
 
-	redirects := NewInMemoryRedirectRepository()
-	redirectsMock := redirectRepoFake{repo: redirects, FailMode: false}
+func TestCreateGetHandler(t *testing.T) {
+	_, router := setupTest()
 
-	users := StaticUsersRepository{}
+	w := executeCall(router, "GET", "/nonexistent", "")
+	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
-	svc := NewUrlShortenerService(staticHasher, &redirectsMock, users)
+	w = executeCall(router, "GET", "/"+testShort, "")
+
+	location := w.Header().Get("Location")
+	cacheControl := w.Header().Get("Cache-Control")
+	referrerPolicy := w.Header().Get("Referrer-Policy")
+
+	assert.Equalf(t, http.StatusMovedPermanently, w.Code, "Expected status code to be 301, got %d", w.Code)
+	assert.Equalf(t, testURL, location, "Expected location header to be %s, got %s", testURL, location)
+	assert.Containsf(t, cacheControl, "private", "Expected cache-control header to contain private, got %s", cacheControl)
+	assert.Containsf(t, cacheControl, "max-age", "Expected cache-control header to contain max-age, got %s", cacheControl)
+	assert.Equalf(t, "unsafe-url", referrerPolicy, "Expected referrer-policy header to be unsafe-url, got %s", referrerPolicy)
+}
+
+func TestCreatePostHandler(t *testing.T) {
+	svc, router := setupTest()
+
+	w := executeCall(router, "POST", "/", "")
+	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
+
+	w = executeCall(router, "POST", "/", `{}`)
+	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
+
+	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
+	assert.Equalf(t, http.StatusCreated, w.Code, "Expected status code to be 201, got %d", w.Code)
+
+	svc.FailMode = true
+	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
+	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
+}
+
+func TestCreateDeleteHandler(t *testing.T) {
+	_, router := setupTest()
+
+	w := executeCall(router, "DELETE", "/nonexistent", "")
+	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
+
+	w = executeCall(router, "DELETE", "/"+testShort, "")
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
+}
+
+func setupTest() (*urlShortenerServiceFake, *gin.Engine) {
+	svc := newShortenerServiceFake()
 
 	gin.SetMode(gin.TestMode)
 	accounts := gin.Accounts{"test": "test"}
 	router := SetupRoutes(gin.New(), "/", svc, accounts)
 
-	return &redirectsMock, &svc, router
+	return svc, router
 }
 
 func executeCall(router *gin.Engine, method string, url string, body string) *httptest.ResponseRecorder {
@@ -40,62 +86,49 @@ func executeCall(router *gin.Engine, method string, url string, body string) *ht
 	return w
 }
 
-func TestCreateHealthHandler(t *testing.T) {
-	_, _, router := setupTest()
-	w := executeCall(router, "GET", "/health", "")
-	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
+const testShort = "short"
+const testURL = "https://www.google.com"
+
+type urlShortenerServiceFake struct {
+	FailMode bool
 }
 
-func TestCreateGetHandler(t *testing.T) {
-	url := "https://www.google.com"
-	_, svc, router := setupTest()
-
-	w := executeCall(router, "GET", "/nonexistent", "")
-	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
-
-	short, err := svc.ShortenURL(url)
-	assert.NoErrorf(t, err, "Expected no error, got %v", err)
-
-	w = executeCall(router, "GET", "/"+short, "")
-
-	location := w.Header().Get("Location")
-	cacheControl := w.Header().Get("Cache-Control")
-	referrerPolicy := w.Header().Get("Referrer-Policy")
-
-	assert.Equalf(t, http.StatusMovedPermanently, w.Code, "Expected status code to be 301, got %d", w.Code)
-	assert.Equalf(t, url, location, "Expected location header to be %s, got %s", url, location)
-	assert.Containsf(t, cacheControl, "private", "Expected cache-control header to contain private, got %s", cacheControl)
-	assert.Containsf(t, cacheControl, "max-age", "Expected cache-control header to contain max-age, got %s", cacheControl)
-	assert.Equalf(t, "unsafe-url", referrerPolicy, "Expected referrer-policy header to be unsafe-url, got %s", referrerPolicy)
+func newShortenerServiceFake() *urlShortenerServiceFake {
+	return &urlShortenerServiceFake{FailMode: false}
 }
 
-func TestCreatePostHandler(t *testing.T) {
-	repo, _, router := setupTest()
+func (s urlShortenerServiceFake) ShortenURL(url string) (string, error) {
+	if s.FailMode {
+		return "", errors.New("fake error")
+	}
 
-	w := executeCall(router, "POST", "/", "")
-	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
+	if url != testURL {
+		return "", errors.New("not found")
+	}
 
-	w = executeCall(router, "POST", "/", `{}`)
-	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
-
-	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
-	assert.Equalf(t, http.StatusCreated, w.Code, "Expected status code to be 201, got %d", w.Code)
-
-	repo.FailMode = true
-	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
-	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
+	return testShort, nil
 }
 
-func TestCreateDeleteHandler(t *testing.T) {
-	url := "https://www.google.com"
-	_, svc, router := setupTest()
+func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
+	if s.FailMode {
+		return "", errors.New("fake error")
+	}
 
-	w := executeCall(router, "DELETE", "/nonexistent", "")
-	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
+	if short != testShort {
+		return "", errors.New("not found")
+	}
 
-	_, err := svc.ShortenURL(url)
-	assert.NoErrorf(t, err, "Expected no error, got %v", err)
+	return testURL, nil
+}
 
-	w = executeCall(router, "DELETE", "/short", "")
-	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
+func (s urlShortenerServiceFake) DeleteShortURL(short string) error {
+	if s.FailMode {
+		return errors.New("fake error")
+	}
+
+	if short != testShort {
+		return errors.New("not found")
+	}
+
+	return nil
 }

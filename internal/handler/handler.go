@@ -1,11 +1,12 @@
-package internal
+package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/pscheid92/dwarferl/internal"
 	"net/http"
 )
 
-func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener UrlShortenerService, accounts gin.Accounts) *gin.Engine {
+func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.UrlShortenerService, accounts gin.Accounts) *gin.Engine {
 	router.RedirectTrailingSlash = false
 
 	g := router.Group(forwardedPrefix)
@@ -32,7 +33,7 @@ func createHealthHandler() gin.HandlerFunc {
 	}
 }
 
-func createGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 
@@ -48,7 +49,7 @@ func createGetHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func createPostHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createPostHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request RedirectCreationRequest
 		err := c.BindJSON(&request)
@@ -71,7 +72,7 @@ func createPostHandler(shortener UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func createDeleteHandler(shortener UrlShortenerService) gin.HandlerFunc {
+func createDeleteHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 

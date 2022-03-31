@@ -1,14 +1,17 @@
-package internal
+package shortener
 
-import "errors"
+import (
+	"errors"
+	"github.com/pscheid92/dwarferl/internal"
+)
 
 type UrlShortenerService struct {
-	hasher    Hasher
-	redirects RedirectRepository
-	users     UsersRepository
+	hasher    internal.Hasher
+	redirects internal.RedirectRepository
+	users     internal.UsersRepository
 }
 
-func NewUrlShortenerService(hasher Hasher, redirects RedirectRepository, users UsersRepository) UrlShortenerService {
+func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectRepository, users internal.UsersRepository) UrlShortenerService {
 	return UrlShortenerService{
 		hasher:    hasher,
 		redirects: redirects,

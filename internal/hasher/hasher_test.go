@@ -1,23 +1,30 @@
-package internal
+package hasher
 
 import (
+	"github.com/google/uuid"
+	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestUrlHasher(t *testing.T) {
+	var testUser = internal.User{
+		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
+		Email: "example@example.com",
+	}
+
 	tt := []struct {
-		user  User
+		user  internal.User
 		url   string
 		short string
 	}{
 		{
-			DummyUser,
+			testUser,
 			"https://www.google.com",
 			"hYhahA",
 		},
 		{
-			DummyUser,
+			testUser,
 			"https://patrickscheid.de",
 			"5fLDtC",
 		},

@@ -1,7 +1,9 @@
-package internal
+package shortener
 
 import (
 	"errors"
+	"github.com/google/uuid"
+	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -57,39 +59,66 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 }
 
 func setupService() (*redirectRepoFake, *UrlShortenerService) {
-	hasher := func(_ User, _ string) string { return "short" }
+	hasher := func(_ internal.User, _ string) string { return "short" }
 
-	redirects := NewInMemoryRedirectRepository()
-	redirectsMock := &redirectRepoFake{repo: redirects, FailMode: false}
+	redirects := newRedirectRepoFake()
+	users := newUsersRepoFake()
 
-	users := StaticUsersRepository{}
-
-	svc := NewUrlShortenerService(hasher, redirectsMock, users)
-	return redirectsMock, &svc
+	svc := NewUrlShortenerService(hasher, redirects, users)
+	return redirects, &svc
 }
 
 type redirectRepoFake struct {
-	repo     *InMemoryRedirectRepository
-	FailMode bool
+	redirects map[string]string
+	FailMode  bool
+}
+
+func newRedirectRepoFake() *redirectRepoFake {
+	return &redirectRepoFake{
+		redirects: make(map[string]string),
+		FailMode:  false,
+	}
 }
 
 func (r redirectRepoFake) Save(short string, url string) error {
 	if r.FailMode {
 		return errors.New("mock error")
 	}
-	return r.repo.Save(short, url)
+	r.redirects[short] = url
+	return nil
 }
 
 func (r redirectRepoFake) Expand(short string) (string, bool) {
 	if r.FailMode {
 		return "", false
 	}
-	return r.repo.Expand(short)
+	url, ok := r.redirects[short]
+	return url, ok
 }
 
 func (r redirectRepoFake) Delete(short string) error {
 	if r.FailMode {
 		return errors.New("mock error")
 	}
-	return r.repo.Delete(short)
+	if _, ok := r.redirects[short]; !ok {
+		return errors.New("not found")
+	}
+	delete(r.redirects, short)
+	return nil
+}
+
+type usersRepoFake struct {
+	// EMPTY
+}
+
+func newUsersRepoFake() *usersRepoFake {
+	return &usersRepoFake{}
+}
+
+func (u usersRepoFake) Get() (internal.User, error) {
+	user := internal.User{
+		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
+		Email: "example@example.com",
+	}
+	return user, nil
 }

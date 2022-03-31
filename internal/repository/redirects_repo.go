@@ -1,12 +1,6 @@
-package internal
+package repository
 
 import "errors"
-
-type RedirectRepository interface {
-	Save(short string, url string) error
-	Expand(short string) (string, bool)
-	Delete(short string) error
-}
 
 type InMemoryRedirectRepository struct {
 	redirects map[string]string
