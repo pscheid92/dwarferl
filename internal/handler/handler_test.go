@@ -99,7 +99,7 @@ func executeCall(router *gin.Engine, method string, url string, body string) *ht
 	return w
 }
 
-const testUser = "user1"
+const testUser = "00000000-0000-0000-0000-000000000000"
 const testShort = "short"
 const testURL = "https://www.google.com"
 
