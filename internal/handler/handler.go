@@ -52,7 +52,7 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 
 func createListHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		list, err := shortener.List("user1")
+		list, err := shortener.List("00000000-0000-0000-0000-000000000000")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return

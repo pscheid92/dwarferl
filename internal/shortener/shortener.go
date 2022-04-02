@@ -34,7 +34,7 @@ func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
 }
 
 func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
-	user, _ := u.users.Get("")
+	user, _ := u.users.Get("00000000-0000-0000-0000-000000000000")
 	short := u.hasher(user, url)
 
 	redirect := internal.Redirect{
