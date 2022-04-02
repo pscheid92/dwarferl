@@ -30,9 +30,12 @@ func (i InMemoryRedirectRepository) Save(redirect internal.Redirect) error {
 	return nil
 }
 
-func (i InMemoryRedirectRepository) Expand(short string) (internal.Redirect, bool) {
+func (i InMemoryRedirectRepository) Expand(short string) (internal.Redirect, error) {
 	url, ok := i.redirects[short]
-	return url, ok
+	if !ok {
+		return internal.Redirect{}, errors.New("not found")
+	}
+	return url, nil
 }
 
 func (i InMemoryRedirectRepository) Delete(short string) error {

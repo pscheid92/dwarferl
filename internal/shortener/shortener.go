@@ -1,7 +1,6 @@
 package shortener
 
 import (
-	"errors"
 	"github.com/pscheid92/dwarferl/internal"
 	"time"
 )
@@ -53,11 +52,10 @@ func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
 }
 
 func (u UrlShortenerService) ExpandShortURL(short string) (internal.Redirect, error) {
-	redirect, ok := u.redirects.Expand(short)
-	if !ok {
-		return internal.Redirect{}, errors.New("not found")
+	redirect, err := u.redirects.Expand(short)
+	if err != nil {
+		return internal.Redirect{}, err
 	}
-
 	return redirect, nil
 }
 

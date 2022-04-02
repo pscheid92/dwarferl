@@ -26,7 +26,7 @@ type UsersRepository interface {
 type RedirectRepository interface {
 	List(user User) ([]Redirect, error)
 	Save(redirect Redirect) error
-	Expand(short string) (Redirect, bool)
+	Expand(short string) (Redirect, error)
 	Delete(short string) error
 }
 
