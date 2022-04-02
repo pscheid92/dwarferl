@@ -38,7 +38,7 @@ func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
 	short := u.hasher(user, url)
 
 	redirect := internal.Redirect{
-		UserID:    user.ID.String(),
+		UserID:    user.ID,
 		Short:     short,
 		URL:       url,
 		CreatedAt: time.Now(),

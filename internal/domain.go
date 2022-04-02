@@ -1,15 +1,14 @@
 package internal
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type Hasher = func(User, string) string
 
 type User struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
+	ID    string `json:"id"`
+	Email string `json:"email"`
 }
 
 type Redirect struct {

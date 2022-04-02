@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/google/uuid"
 	"github.com/pscheid92/dwarferl/internal"
 )
 

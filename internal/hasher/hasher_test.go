@@ -1,7 +1,6 @@
 package hasher
 
 import (
-	"github.com/google/uuid"
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -9,7 +8,7 @@ import (
 
 func TestUrlHasher(t *testing.T) {
 	var testUser = internal.User{
-		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
+		ID:    "00000000-0000-0000-0000-000000000000",
 		Email: "example@example.com",
 	}
 

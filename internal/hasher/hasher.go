@@ -9,7 +9,7 @@ import (
 func UrlHasher(user internal.User, url string) string {
 	hash := fnv.New32a()
 	_, _ = hash.Write([]byte(url))
-	_, _ = hash.Write([]byte(user.ID.String()))
+	_, _ = hash.Write([]byte(user.ID))
 	hashed := hash.Sum([]byte{})
 
 	return base62.EncodeToString(hashed)
