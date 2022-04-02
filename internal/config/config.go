@@ -1,6 +1,7 @@
-package internal
+package config
 
 import (
+	"errors"
 	"github.com/spf13/viper"
 	"strings"
 )
@@ -24,7 +25,7 @@ func GatherConfig() (Configuration, error) {
 	viper.SetDefault("basic_auth_secret", "admin")
 
 	// forwarded prefix
-	viper.SetDefault("forward_prefix", "/")
+	viper.SetDefault("forwarded_prefix", "/")
 
 	// database
 	viper.SetDefault("database.host", "localhost")
@@ -42,6 +43,10 @@ func GatherConfig() (Configuration, error) {
 	var config Configuration
 	if err := viper.Unmarshal(&config); err != nil {
 		return config, err
+	}
+
+	if !strings.HasPrefix(config.ForwardedPrefix, "/") {
+		return Configuration{}, errors.New("forwarded_prefix must start with /")
 	}
 
 	if !strings.HasSuffix(config.ForwardedPrefix, "/") {

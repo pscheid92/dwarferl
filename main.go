@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/pscheid92/dwarferl/internal"
+	"github.com/pscheid92/dwarferl/internal/config"
 	"github.com/pscheid92/dwarferl/internal/handler"
 	"github.com/pscheid92/dwarferl/internal/hasher"
 	"github.com/pscheid92/dwarferl/internal/repository"
@@ -13,32 +13,32 @@ import (
 )
 
 func main() {
-	config, err := internal.GatherConfig()
+	conf, err := config.GatherConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pool := openPGConnectionPool(err, config)
+	pool := openPGConnectionPool(err, conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer pool.Close()
 
-	accounts := gin.Accounts{config.BasicAuthUser: config.BasicAuthSecret}
+	accounts := gin.Accounts{conf.BasicAuthUser: conf.BasicAuthSecret}
 
 	redirectsRepository := repository.NewInMemoryRedirectRepository()
 	usersRepository := repository.NewDBUsersRepository(pool)
 	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository, usersRepository)
 
 	r := gin.Default()
-	r = handler.SetupRoutes(r, config.ForwardedPrefix, urlShortener, accounts)
+	r = handler.SetupRoutes(r, conf.ForwardedPrefix, urlShortener, accounts)
 
 	if err := r.Run(); err != nil {
 		log.Fatalf("error starting server: %v", err)
 	}
 }
 
-func openPGConnectionPool(err error, config internal.Configuration) *pgxpool.Pool {
+func openPGConnectionPool(err error, config config.Configuration) *pgxpool.Pool {
 	c, err := pgxpool.ParseConfig("")
 	if err != nil {
 		log.Fatal(err)
