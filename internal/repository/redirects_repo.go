@@ -6,25 +6,31 @@ import (
 )
 
 type InMemoryRedirectRepository struct {
-	redirects map[string]string
+	redirects map[string]internal.Redirect
 }
 
 func NewInMemoryRedirectRepository() *InMemoryRedirectRepository {
 	return &InMemoryRedirectRepository{
-		redirects: make(map[string]string),
+		redirects: make(map[string]internal.Redirect),
 	}
 }
 
-func (i InMemoryRedirectRepository) List(user internal.User) (map[string]string, error) {
-	return i.redirects, nil
+func (i InMemoryRedirectRepository) List(user internal.User) ([]internal.Redirect, error) {
+	result := make([]internal.Redirect, 0, len(i.redirects))
+
+	for _, redirect := range i.redirects {
+		result = append(result, redirect)
+	}
+
+	return result, nil
 }
 
-func (i InMemoryRedirectRepository) Save(short string, url string) error {
-	i.redirects[short] = url
+func (i InMemoryRedirectRepository) Save(redirect internal.Redirect) error {
+	i.redirects[redirect.Short] = redirect
 	return nil
 }
 
-func (i InMemoryRedirectRepository) Expand(short string) (string, bool) {
+func (i InMemoryRedirectRepository) Expand(short string) (internal.Redirect, bool) {
 	url, ok := i.redirects[short]
 	return url, ok
 }

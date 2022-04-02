@@ -3,6 +3,7 @@ package shortener
 import (
 	"errors"
 	"github.com/pscheid92/dwarferl/internal"
+	"time"
 )
 
 type UrlShortenerService struct {
@@ -19,7 +20,7 @@ func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectR
 	}
 }
 
-func (u UrlShortenerService) List(userID string) (map[string]string, error) {
+func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
 	user, err := u.users.Get(userID)
 	if err != nil {
 		return nil, err
@@ -33,24 +34,31 @@ func (u UrlShortenerService) List(userID string) (map[string]string, error) {
 	return list, nil
 }
 
-func (u UrlShortenerService) ShortenURL(url string) (string, error) {
+func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
 	user, _ := u.users.Get("")
 	short := u.hasher(user, url)
 
-	if err := u.redirects.Save(short, url); err != nil {
-		return "", err
+	redirect := internal.Redirect{
+		UserID:    user.ID.String(),
+		Short:     short,
+		URL:       url,
+		CreatedAt: time.Now(),
 	}
 
-	return short, nil
+	if err := u.redirects.Save(redirect); err != nil {
+		return redirect, err
+	}
+
+	return redirect, nil
 }
 
-func (u UrlShortenerService) ExpandShortURL(short string) (string, error) {
-	url, ok := u.redirects.Expand(short)
+func (u UrlShortenerService) ExpandShortURL(short string) (internal.Redirect, error) {
+	redirect, ok := u.redirects.Expand(short)
 	if !ok {
-		return "", errors.New("not found")
+		return internal.Redirect{}, errors.New("not found")
 	}
 
-	return url, nil
+	return redirect, nil
 }
 
 func (u UrlShortenerService) DeleteShortURL(short string) error {

@@ -38,7 +38,7 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 
-		expand, err := shortener.ExpandShortURL(short)
+		redirect, err := shortener.ExpandShortURL(short)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found"})
 			return
@@ -46,7 +46,7 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 
 		c.Header("Cache-Control", "private, max-age=90")
 		c.Header("Referrer-Policy", "unsafe-url")
-		c.Redirect(http.StatusMovedPermanently, expand)
+		c.Redirect(http.StatusMovedPermanently, redirect.URL)
 	}
 }
 

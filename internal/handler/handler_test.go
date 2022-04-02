@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestCreateHealthHandler(t *testing.T) {
@@ -109,7 +111,7 @@ func newShortenerServiceFake() *urlShortenerServiceFake {
 	return &urlShortenerServiceFake{FailMode: false}
 }
 
-func (s urlShortenerServiceFake) List(userID string) (map[string]string, error) {
+func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error) {
 	if s.FailMode {
 		return nil, errors.New("fake error")
 	}
@@ -118,31 +120,52 @@ func (s urlShortenerServiceFake) List(userID string) (map[string]string, error) 
 		return nil, errors.New("user not found")
 	}
 
-	return map[string]string{testShort: testURL}, nil
+	redirect := internal.Redirect{
+		Short:     testShort,
+		URL:       testURL,
+		UserID:    userID,
+		CreatedAt: time.Now(),
+	}
+
+	return []internal.Redirect{redirect}, nil
 }
 
-func (s urlShortenerServiceFake) ShortenURL(url string) (string, error) {
+func (s urlShortenerServiceFake) ShortenURL(url string) (internal.Redirect, error) {
 	if s.FailMode {
-		return "", errors.New("fake error")
+		return internal.Redirect{}, errors.New("fake error")
 	}
 
 	if url != testURL {
-		return "", errors.New("not found")
+		return internal.Redirect{}, errors.New("not found")
 	}
 
-	return testShort, nil
+	redirect := internal.Redirect{
+		Short:     testShort,
+		URL:       testURL,
+		UserID:    testUser,
+		CreatedAt: time.Now(),
+	}
+
+	return redirect, nil
 }
 
-func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
+func (s urlShortenerServiceFake) ExpandShortURL(short string) (internal.Redirect, error) {
 	if s.FailMode {
-		return "", errors.New("fake error")
+		return internal.Redirect{}, errors.New("fake error")
 	}
 
 	if short != testShort {
-		return "", errors.New("not found")
+		return internal.Redirect{}, errors.New("not found")
 	}
 
-	return testURL, nil
+	redirect := internal.Redirect{
+		Short:     testShort,
+		URL:       testURL,
+		UserID:    testUser,
+		CreatedAt: time.Now(),
+	}
+
+	return redirect, nil
 }
 
 func (s urlShortenerServiceFake) DeleteShortURL(short string) error {

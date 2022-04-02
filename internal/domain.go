@@ -1,6 +1,9 @@
 package internal
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Hasher = func(User, string) string
 
@@ -9,20 +12,27 @@ type User struct {
 	Email string    `json:"email"`
 }
 
+type Redirect struct {
+	Short     string    `json:"short"`
+	URL       string    `json:"url"`
+	UserID    string    `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type UsersRepository interface {
 	Get(id string) (User, error)
 }
 
 type RedirectRepository interface {
-	List(User) (map[string]string, error)
-	Save(short string, url string) error
-	Expand(short string) (string, bool)
+	List(user User) ([]Redirect, error)
+	Save(redirect Redirect) error
+	Expand(short string) (Redirect, bool)
 	Delete(short string) error
 }
 
 type UrlShortenerService interface {
-	List(userID string) (map[string]string, error)
-	ShortenURL(url string) (string, error)
-	ExpandShortURL(short string) (string, error)
+	List(userID string) ([]Redirect, error)
+	ShortenURL(url string) (Redirect, error)
+	ExpandShortURL(short string) (Redirect, error)
 	DeleteShortURL(short string) error
 }
