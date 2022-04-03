@@ -29,8 +29,8 @@ func GatherConfig() (Configuration, error) {
 	// environment variable bindings
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.BindEnv("basic_auth_user", "DWARFERL_USER")
-	viper.BindEnv("basic_auth_secret", "DWARFERL_SECRET")
+	_ = viper.BindEnv("basic_auth_user", "DWARFERL_USER")
+	_ = viper.BindEnv("basic_auth_secret", "DWARFERL_SECRET")
 
 	var config Configuration
 	if err := viper.Unmarshal(&config); err != nil {
