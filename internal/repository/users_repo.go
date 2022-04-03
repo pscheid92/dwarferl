@@ -4,23 +4,25 @@ import (
 	"context"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pscheid92/dwarferl/internal"
+	"github.com/pscheid92/dwarferl/internal/repository/database"
 )
 
 type DBUsersRepository struct {
-	pool *pgxpool.Pool
+	queries *database.Queries
 }
 
 func NewDBUsersRepository(pool *pgxpool.Pool) *DBUsersRepository {
-	return &DBUsersRepository{pool: pool}
+	return &DBUsersRepository{queries: database.New(pool)}
 }
 
 func (d *DBUsersRepository) Get(id string) (internal.User, error) {
-	sql := `SELECT id, email FROM users WHERE id = $1`
-
-	var user internal.User
-	if err := d.pool.QueryRow(context.Background(), sql, id).Scan(&user.ID, &user.Email); err != nil {
-		return user, err
+	userDTO, err := d.queries.GetUserById(context.Background(), id)
+	if err != nil {
+		return internal.User{}, err
 	}
 
-	return user, nil
+	return internal.User{
+		ID:    userDTO.ID,
+		Email: userDTO.Email,
+	}, nil
 }

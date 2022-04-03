@@ -2,86 +2,70 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pscheid92/dwarferl/internal"
+	"github.com/pscheid92/dwarferl/internal/repository/database"
 )
 
 type DBRedirectsRepository struct {
-	pool *pgxpool.Pool
+	queries *database.Queries
 }
 
 func NewDBRedirectsRepository(pool *pgxpool.Pool) *DBRedirectsRepository {
-	return &DBRedirectsRepository{pool: pool}
+	return &DBRedirectsRepository{queries: database.New(pool)}
 }
 
 func (d DBRedirectsRepository) List(user internal.User) ([]internal.Redirect, error) {
-	sql := `SELECT short, url, user_id, created_at FROM redirects WHERE user_id = $1`
-
-	rows, err := d.pool.Query(context.Background(), sql, user.ID)
+	redirectsDTO, err := d.queries.ListRedirectsByUserId(context.Background(), user.ID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var redirects []internal.Redirect
-	for rows.Next() {
-		var redirect internal.Redirect
-
-		err = rows.Scan(&redirect.Short, &redirect.URL, &redirect.UserID, &redirect.CreatedAt)
-		if err != nil {
-			return nil, err
+	redirects := make([]internal.Redirect, len(redirectsDTO))
+	for i, r := range redirectsDTO {
+		redirects[i] = internal.Redirect{
+			Short:     r.Short,
+			URL:       r.Url,
+			UserID:    r.UserID,
+			CreatedAt: r.CreatedAt,
 		}
-
-		redirects = append(redirects, redirect)
-	}
-
-	if rows.Err() != nil {
-		return nil, rows.Err()
 	}
 
 	return redirects, nil
 }
 
 func (d DBRedirectsRepository) Save(redirect internal.Redirect) error {
-	// TODO(ps): we do not return the db entry, so creation time is plain wrong, if conflict!
-	sql := `INSERT INTO redirects (short, url, user_id, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (short) DO NOTHING RE`
-
-	_, err := d.pool.Exec(context.Background(), sql, redirect.Short, redirect.URL, redirect.UserID, redirect.CreatedAt)
+	params := database.SaveRedirectParams{
+		Short:     redirect.Short,
+		Url:       redirect.URL,
+		UserID:    redirect.UserID,
+		CreatedAt: redirect.CreatedAt,
+	}
+	err := d.queries.SaveRedirect(context.Background(), params)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (d DBRedirectsRepository) Expand(short string) (internal.Redirect, error) {
-	sql := `SELECT short, url, user_id, created_at FROM redirects WHERE short = $1`
-
-	var redirect internal.Redirect
-
-	err := d.pool.
-		QueryRow(context.Background(), sql, short).
-		Scan(&redirect.Short, &redirect.URL, &redirect.UserID, &redirect.CreatedAt)
-
+	redirectDTO, err := d.queries.ExpandRedirect(context.Background(), short)
 	if err != nil {
-		return redirect, err
+		return internal.Redirect{}, err
 	}
 
-	return redirect, nil
+	return internal.Redirect{
+		Short:     redirectDTO.Short,
+		URL:       redirectDTO.Url,
+		UserID:    redirectDTO.UserID,
+		CreatedAt: redirectDTO.CreatedAt,
+	}, nil
 }
 
 func (d DBRedirectsRepository) Delete(short string) error {
-	sql := `DELETE FROM redirects WHERE short = $1`
-
-	commandTag, err := d.pool.Exec(context.Background(), sql, short)
+	err := d.queries.DeleteRedirect(context.Background(), short)
 	if err != nil {
 		return err
 	}
-
-	if commandTag.RowsAffected() != 1 {
-		return errors.New("failed to delete redirect")
-	}
-
 	return nil
 }
