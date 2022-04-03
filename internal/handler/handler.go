@@ -40,7 +40,7 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 
 		redirect, err := shortener.ExpandShortURL(short)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found", "details": err.Error()})
 			return
 		}
 
@@ -54,7 +54,7 @@ func createListHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		list, err := shortener.List("00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": err.Error()})
 			return
 		}
 
@@ -77,7 +77,7 @@ func createPostHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 
 		short, err := shortener.ShortenURL(request.Url)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": err.Error()})
 			return
 		}
 
@@ -91,7 +91,7 @@ func createDeleteHandler(shortener internal.UrlShortenerService) gin.HandlerFunc
 
 		err := shortener.DeleteShortURL(short)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found", "details": err.Error()})
 			return
 		}
 

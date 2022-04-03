@@ -26,7 +26,7 @@ func main() {
 
 	accounts := gin.Accounts{conf.BasicAuthUser: conf.BasicAuthSecret}
 
-	redirectsRepository := repository.NewInMemoryRedirectRepository()
+	redirectsRepository := repository.NewDBRedirectsRepository(pool)
 	usersRepository := repository.NewDBUsersRepository(pool)
 	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository, usersRepository)
 

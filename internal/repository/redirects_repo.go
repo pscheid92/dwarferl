@@ -1,47 +1,87 @@
 package repository
 
 import (
+	"context"
 	"errors"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pscheid92/dwarferl/internal"
 )
 
-type InMemoryRedirectRepository struct {
-	redirects map[string]internal.Redirect
+type DBRedirectsRepository struct {
+	pool *pgxpool.Pool
 }
 
-func NewInMemoryRedirectRepository() *InMemoryRedirectRepository {
-	return &InMemoryRedirectRepository{
-		redirects: make(map[string]internal.Redirect),
+func NewDBRedirectsRepository(pool *pgxpool.Pool) *DBRedirectsRepository {
+	return &DBRedirectsRepository{pool: pool}
+}
+
+func (d DBRedirectsRepository) List(user internal.User) ([]internal.Redirect, error) {
+	sql := `SELECT short, url, user_id, created_at FROM redirects WHERE user_id = $1`
+
+	rows, err := d.pool.Query(context.Background(), sql, user.ID)
+	if err != nil {
+		return nil, err
 	}
-}
+	defer rows.Close()
 
-func (i InMemoryRedirectRepository) List(user internal.User) ([]internal.Redirect, error) {
-	result := make([]internal.Redirect, 0, len(i.redirects))
+	var redirects []internal.Redirect
+	for rows.Next() {
+		var redirect internal.Redirect
 
-	for _, redirect := range i.redirects {
-		result = append(result, redirect)
+		err = rows.Scan(&redirect.Short, &redirect.URL, &redirect.UserID, &redirect.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		redirects = append(redirects, redirect)
 	}
 
-	return result, nil
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return redirects, nil
 }
 
-func (i InMemoryRedirectRepository) Save(redirect internal.Redirect) error {
-	i.redirects[redirect.Short] = redirect
+func (d DBRedirectsRepository) Save(redirect internal.Redirect) error {
+	// TODO(ps): we do not return the db entry, so creation time is plain wrong, if conflict!
+	sql := `INSERT INTO redirects (short, url, user_id, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (short) DO NOTHING RE`
+
+	_, err := d.pool.Exec(context.Background(), sql, redirect.Short, redirect.URL, redirect.UserID, redirect.CreatedAt)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (i InMemoryRedirectRepository) Expand(short string) (internal.Redirect, error) {
-	url, ok := i.redirects[short]
-	if !ok {
-		return internal.Redirect{}, errors.New("not found")
+func (d DBRedirectsRepository) Expand(short string) (internal.Redirect, error) {
+	sql := `SELECT short, url, user_id, created_at FROM redirects WHERE short = $1`
+
+	var redirect internal.Redirect
+
+	err := d.pool.
+		QueryRow(context.Background(), sql, short).
+		Scan(&redirect.Short, &redirect.URL, &redirect.UserID, &redirect.CreatedAt)
+
+	if err != nil {
+		return redirect, err
 	}
-	return url, nil
+
+	return redirect, nil
 }
 
-func (i InMemoryRedirectRepository) Delete(short string) error {
-	if _, ok := i.redirects[short]; !ok {
-		return errors.New("not found")
+func (d DBRedirectsRepository) Delete(short string) error {
+	sql := `DELETE FROM redirects WHERE short = $1`
+
+	commandTag, err := d.pool.Exec(context.Background(), sql, short)
+	if err != nil {
+		return err
 	}
-	delete(i.redirects, short)
+
+	if commandTag.RowsAffected() != 1 {
+		return errors.New("failed to delete redirect")
+	}
+
 	return nil
 }
