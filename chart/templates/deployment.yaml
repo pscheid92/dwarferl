@@ -27,6 +27,17 @@ spec:
               value: {{ .Values.environment }}
             - name: FORWARDED_PREFIX
               value: {{ .Values.forwardedPrefix }}
+            - name: PGHOST
+              value: {{ .Values.database.host }}
+            - name: PGDATABASE
+              value: {{ .Values.database.dbname }}
+            - name: PGUSER
+              value: {{ .Values.database.user }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dwarferl-secret
+                  key: pgpassword
             - name: DWARFERL_USER
               valueFrom:
                 secretKeyRef:
