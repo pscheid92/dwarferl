@@ -7,11 +7,9 @@ import (
 )
 
 type Configuration struct {
-	BasicAuthUser    string `mapstructure:"basic_auth_user"`
-	BasicAuthSecret  string `mapstructure:"basic_auth_secret"`
-	ForwardedPrefix  string `mapstructure:"forwarded_prefix"`
-	DatabaseURL      string `mapstructure:"database_url"`
-	DatabasePassword string `mapstructure:"database_password"`
+	BasicAuthUser   string `mapstructure:"basic_auth_user"`
+	BasicAuthSecret string `mapstructure:"basic_auth_secret"`
+	ForwardedPrefix string `mapstructure:"forwarded_prefix"`
 }
 
 func GatherConfig() (Configuration, error) {
@@ -21,10 +19,6 @@ func GatherConfig() (Configuration, error) {
 
 	// forwarded prefix
 	viper.SetDefault("forwarded_prefix", "/")
-
-	// database
-	viper.SetDefault("database_url", "postgres://postgres@localhost:5432/postgres")
-	viper.SetDefault("database_password", "password")
 
 	// environment variable bindings
 	viper.AutomaticEnv()

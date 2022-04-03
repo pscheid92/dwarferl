@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pool, err := openPGConnectionPool(conf)
+	pool, err := openPGConnectionPool()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,11 +38,10 @@ func main() {
 	}
 }
 
-func openPGConnectionPool(config config.Configuration) (*pgxpool.Pool, error) {
-	c, err := pgxpool.ParseConfig(config.DatabaseURL)
+func openPGConnectionPool() (*pgxpool.Pool, error) {
+	c, err := pgxpool.ParseConfig("")
 	if err != nil {
 		return nil, err
 	}
-	c.ConnConfig.Password = config.DatabasePassword
 	return pgxpool.ConnectConfig(context.Background(), c)
 }
