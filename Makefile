@@ -1,3 +1,6 @@
+
+PGSERVICE ?= "dwarferl-local"
+
 generate:
 	sqlc -f db/sqlc.yaml -x generate
 
@@ -15,4 +18,4 @@ precommit:
 
 
 migrate:
-	tern migrate -c db/migrations/tern.conf  -m db/migrations
+	PGSERVICE=$(PGSERVICE) tern migrate -m db/migrations
