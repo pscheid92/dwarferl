@@ -48,18 +48,12 @@ func (d DBRedirectsRepository) Save(redirect internal.Redirect) error {
 	return nil
 }
 
-func (d DBRedirectsRepository) Expand(short string) (internal.Redirect, error) {
-	redirectDTO, err := d.queries.ExpandRedirect(context.Background(), short)
+func (d DBRedirectsRepository) Expand(short string) (string, error) {
+	url, err := d.queries.ExpandRedirect(context.Background(), short)
 	if err != nil {
-		return internal.Redirect{}, err
+		return "", err
 	}
-
-	return internal.Redirect{
-		Short:     redirectDTO.Short,
-		URL:       redirectDTO.Url,
-		UserID:    redirectDTO.UserID,
-		CreatedAt: redirectDTO.CreatedAt,
-	}, nil
+	return url, nil
 }
 
 func (d DBRedirectsRepository) Delete(short string) error {

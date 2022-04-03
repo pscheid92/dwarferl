@@ -25,13 +25,13 @@ type UsersRepository interface {
 type RedirectRepository interface {
 	List(user User) ([]Redirect, error)
 	Save(redirect Redirect) error
-	Expand(short string) (Redirect, error)
+	Expand(short string) (string, error)
 	Delete(short string) error
 }
 
 type UrlShortenerService interface {
 	List(userID string) ([]Redirect, error)
 	ShortenURL(url string) (Redirect, error)
-	ExpandShortURL(short string) (Redirect, error)
+	ExpandShortURL(short string) (string, error)
 	DeleteShortURL(short string) error
 }

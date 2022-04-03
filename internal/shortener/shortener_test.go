@@ -33,7 +33,7 @@ func TestUrlShortenerService_ShortenURL(t *testing.T) {
 
 	expanded, err := repo.Expand(redirect.Short)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
-	assert.Equalf(t, url, expanded.URL, "Expected redirect to be expanded to %s, got %s", url, expanded.URL)
+	assert.Equalf(t, url, expanded, "Expected redirect to be expanded to %s, got %s", url, expanded)
 
 	repo.FailMode = true
 	_, err = sut.ShortenURL(url)
@@ -49,7 +49,7 @@ func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 
 	expanded, err := sut.ExpandShortURL(redirect.Short)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
-	assert.Equalf(t, url, expanded.URL, "Expected %s to be expanded to %s, got %s", redirect.Short, url, expanded)
+	assert.Equalf(t, url, expanded, "Expected %s to be expanded to %s, got %s", redirect.Short, url, expanded)
 
 	repo.FailMode = true
 	_, err = sut.ExpandShortURL(redirect.Short)
@@ -115,16 +115,16 @@ func (r redirectRepoFake) Save(redirect internal.Redirect) error {
 	return nil
 }
 
-func (r redirectRepoFake) Expand(short string) (internal.Redirect, error) {
+func (r redirectRepoFake) Expand(short string) (string, error) {
 	if r.FailMode {
-		return internal.Redirect{}, errors.New("fake error")
+		return "", errors.New("fake error")
 	}
 
 	url, ok := r.redirects[short]
 	if !ok {
-		return internal.Redirect{}, errors.New("not found")
+		return "", errors.New("not found")
 	}
-	return url, nil
+	return url.URL, nil
 }
 
 func (r redirectRepoFake) Delete(short string) error {

@@ -149,23 +149,16 @@ func (s urlShortenerServiceFake) ShortenURL(url string) (internal.Redirect, erro
 	return redirect, nil
 }
 
-func (s urlShortenerServiceFake) ExpandShortURL(short string) (internal.Redirect, error) {
+func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
 	if s.FailMode {
-		return internal.Redirect{}, errors.New("fake error")
+		return "", errors.New("fake error")
 	}
 
 	if short != testShort {
-		return internal.Redirect{}, errors.New("not found")
+		return "", errors.New("not found")
 	}
 
-	redirect := internal.Redirect{
-		Short:     testShort,
-		URL:       testURL,
-		UserID:    testUser,
-		CreatedAt: time.Now(),
-	}
-
-	return redirect, nil
+	return testURL, nil
 }
 
 func (s urlShortenerServiceFake) DeleteShortURL(short string) error {

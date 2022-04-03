@@ -21,21 +21,16 @@ func (q *Queries) DeleteRedirect(ctx context.Context, short string) error {
 }
 
 const expandRedirect = `-- name: ExpandRedirect :one
-SELECT short, url, user_id, created_at
+SELECT url
 FROM redirects
 WHERE short = $1
 `
 
-func (q *Queries) ExpandRedirect(ctx context.Context, short string) (Redirect, error) {
+func (q *Queries) ExpandRedirect(ctx context.Context, short string) (string, error) {
 	row := q.db.QueryRow(ctx, expandRedirect, short)
-	var i Redirect
-	err := row.Scan(
-		&i.Short,
-		&i.Url,
-		&i.UserID,
-		&i.CreatedAt,
-	)
-	return i, err
+	var url string
+	err := row.Scan(&url)
+	return url, err
 }
 
 const listRedirectsByUserId = `-- name: ListRedirectsByUserId :many

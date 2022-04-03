@@ -10,7 +10,7 @@ ON CONFLICT (short) DO NOTHING
 RETURNING *;
 
 -- name: ExpandRedirect :one
-SELECT *
+SELECT url
 FROM redirects
 WHERE short = $1;
 

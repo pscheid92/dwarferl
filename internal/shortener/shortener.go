@@ -51,10 +51,10 @@ func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
 	return redirect, nil
 }
 
-func (u UrlShortenerService) ExpandShortURL(short string) (internal.Redirect, error) {
+func (u UrlShortenerService) ExpandShortURL(short string) (string, error) {
 	redirect, err := u.redirects.Expand(short)
 	if err != nil {
-		return internal.Redirect{}, err
+		return "", err
 	}
 	return redirect, nil
 }
