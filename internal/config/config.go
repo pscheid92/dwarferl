@@ -7,16 +7,11 @@ import (
 )
 
 type Configuration struct {
-	BasicAuthUser   string `mapstructure:"basic_auth_user"`
-	BasicAuthSecret string `mapstructure:"basic_auth_secret"`
-	ForwardedPrefix string `mapstructure:"forwarded_prefix"`
-	Database        struct {
-		Host     string
-		Port     uint16
-		User     string
-		Password string
-		Name     string
-	}
+	BasicAuthUser    string `mapstructure:"basic_auth_user"`
+	BasicAuthSecret  string `mapstructure:"basic_auth_secret"`
+	ForwardedPrefix  string `mapstructure:"forwarded_prefix"`
+	DatabaseURL      string `mapstructure:"database_url"`
+	DatabasePassword string `mapstructure:"database_password"`
 }
 
 func GatherConfig() (Configuration, error) {
@@ -28,11 +23,8 @@ func GatherConfig() (Configuration, error) {
 	viper.SetDefault("forwarded_prefix", "/")
 
 	// database
-	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", 5432)
-	viper.SetDefault("database.user", "postgres")
-	viper.SetDefault("database.password", "password")
-	viper.SetDefault("database.name", "postgres")
+	viper.SetDefault("database_url", "postgres://postgres@localhost:5432/postgres")
+	viper.SetDefault("database_password", "password")
 
 	// environment variable bindings
 	viper.AutomaticEnv()

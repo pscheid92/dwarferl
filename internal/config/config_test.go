@@ -12,13 +12,20 @@ func TestGatherConfig(t *testing.T) {
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
 	})
 
-	t.Run("successfully reads nested database config", func(t *testing.T) {
-		err := os.Setenv("DATABASE_NAME", "this_is_a_test")
+	t.Run("successfully reads database config", func(t *testing.T) {
+		url := "this_is_a_test_url"
+		pwd := "this_is_a_test_password"
+
+		err := os.Setenv("DATABASE_URL", url)
+		assert.NoErrorf(t, err, "unexpected error: %v", err)
+
+		err = os.Setenv("DATABASE_PASSWORD", pwd)
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
 
 		config, err := GatherConfig()
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
-		assert.Equal(t, "this_is_a_test", config.Database.Name)
+		assert.Equalf(t, url, config.DatabaseURL, "expected database url to be '%s', got %v", url, config.DatabaseURL)
+		assert.Equal(t, pwd, config.DatabasePassword, "expected database password to be '%s', got %v", pwd, config.DatabasePassword)
 	})
 
 	t.Run("successfully read individualised env vars", func(t *testing.T) {
