@@ -31,6 +31,7 @@ func main() {
 	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository, usersRepository)
 
 	r := gin.Default()
+	r.LoadHTMLGlob("templates/*.gohtml")
 	r = handler.SetupRoutes(r, conf.ForwardedPrefix, urlShortener, accounts)
 
 	if err := r.Run(); err != nil {

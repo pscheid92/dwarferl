@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/pscheid92/dwarferl/internal"
@@ -9,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -38,7 +38,7 @@ func TestCreateGetHandler(t *testing.T) {
 	assert.Equalf(t, "unsafe-url", referrerPolicy, "Expected referrer-policy header to be unsafe-url, got %s", referrerPolicy)
 }
 
-func TestCreateListHandler(t *testing.T) {
+func TestIndexPage(t *testing.T) {
 	svc, router := setupTest()
 
 	w := executeCall(router, "GET", "/", "")
@@ -49,31 +49,37 @@ func TestCreateListHandler(t *testing.T) {
 	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 }
 
-func TestCreatePostHandler(t *testing.T) {
+func TestServeCreationPage(t *testing.T) {
+	_, router := setupTest()
+	w := executeCall(router, "GET", "/create", "")
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
+}
+
+func TestHandleCreationPage(t *testing.T) {
 	svc, router := setupTest()
 
-	w := executeCall(router, "POST", "/", "")
-	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
-
-	w = executeCall(router, "POST", "/", `{}`)
-	assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
-
-	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
-	assert.Equalf(t, http.StatusCreated, w.Code, "Expected status code to be 201, got %d", w.Code)
+	w := executeCall(router, "POST", "/create", "url="+testURL)
+	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 
 	svc.FailMode = true
-	w = executeCall(router, "POST", "/", `{"url": "https://www.google.com"}`)
+	w = executeCall(router, "POST", "/create", "url="+testURL)
 	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
+}
+
+func TestServeDeletionPage(t *testing.T) {
+	_, router := setupTest()
+	w := executeCall(router, "GET", "/delete/short", "")
+	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
 }
 
 func TestCreateDeleteHandler(t *testing.T) {
 	_, router := setupTest()
 
-	w := executeCall(router, "DELETE", "/nonexistent", "")
+	w := executeCall(router, "POST", "/delete/nonexistent", "")
 	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
-	w = executeCall(router, "DELETE", "/"+testShort, "")
-	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
+	w = executeCall(router, "POST", "/delete/"+testShort, "")
+	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 }
 
 func setupTest() (*urlShortenerServiceFake, *gin.Engine) {
@@ -81,7 +87,9 @@ func setupTest() (*urlShortenerServiceFake, *gin.Engine) {
 
 	gin.SetMode(gin.TestMode)
 	accounts := gin.Accounts{"test": "test"}
-	router := SetupRoutes(gin.New(), "/", svc, accounts)
+	router := gin.New()
+	router.LoadHTMLGlob("../../templates/*")
+	router = SetupRoutes(router, "/", svc, accounts)
 
 	return svc, router
 }
@@ -89,12 +97,13 @@ func setupTest() (*urlShortenerServiceFake, *gin.Engine) {
 func executeCall(router *gin.Engine, method string, url string, body string) *httptest.ResponseRecorder {
 	var reader io.Reader
 	if body != "" {
-		reader = bytes.NewReader([]byte(body))
+		reader = strings.NewReader(body)
 	}
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, reader)
 	req.SetBasicAuth("test", "test")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	router.ServeHTTP(w, req)
 	return w
 }

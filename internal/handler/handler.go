@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/pscheid92/dwarferl/internal"
 	"net/http"
@@ -15,16 +16,18 @@ func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.
 
 	authorized := g.Group("", gin.BasicAuth(accounts))
 	{
-		authorized.GET("/", createListHandler(shortener))
-		authorized.POST("/", createPostHandler(shortener))
-		authorized.DELETE("/:short", createDeleteHandler(shortener))
+		authorized.GET("/", indexPage(shortener))
+		authorized.GET("/create", serveCreationPage())
+		authorized.POST("/create", handleCreationPage(shortener))
+		authorized.GET("/delete/:short", serverDeletionPage())
+		authorized.POST("/delete/:short", handleDeletionPage(shortener))
 	}
 
 	return router
 }
 
 type RedirectCreationRequest struct {
-	Url string `json:"url"`
+	Url string `form:"url"`
 }
 
 func createHealthHandler() gin.HandlerFunc {
@@ -50,51 +53,62 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func createListHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func indexPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		list, err := shortener.List("00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": err.Error()})
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, list)
+		c.HTML(http.StatusOK, "index.gohtml", list)
 	}
 }
 
-func createPostHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func serveCreationPage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "create.gohtml", nil)
+	}
+}
+
+func handleCreationPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request RedirectCreationRequest
-		err := c.BindJSON(&request)
+
+		err := c.Bind(&request)
 		if err != nil {
 			return
 		}
 
 		if request.Url == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Url is required"})
+			_ = c.AbortWithError(http.StatusBadRequest, errors.New("Url is required"))
 			return
 		}
 
-		short, err := shortener.ShortenURL(request.Url)
+		_, err = shortener.ShortenURL(request.Url)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": err.Error()})
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"short": short})
+		c.Redirect(http.StatusFound, "/")
 	}
 }
 
-func createDeleteHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func serverDeletionPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
+		c.HTML(http.StatusOK, "delete.gohtml", short)
+	}
+}
 
-		err := shortener.DeleteShortURL(short)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Redirect not found", "details": err.Error()})
+func handleDeletionPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		short := c.Param("short")
+		if err := shortener.DeleteShortURL(short); err != nil {
+			_ = c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
-
-		c.JSON(http.StatusOK, gin.H{"success": "Redirect deleted"})
+		c.Redirect(http.StatusFound, "/")
 	}
 }

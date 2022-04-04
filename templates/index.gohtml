@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+{{- /*gotype:[]github.com/pscheid92/dwarferl/internal.Redirect*/ -}}
+<head>
+    <meta charset="UTF-8">
+    <title>Shortener</title>
+</head>
+<body>
+<h1>Shortener</h1>
+
+<p><a href="/create">Shorten Link</a></p>
+
+<ul>
+    {{- range $redirect := . }}
+        <li><a href="/{{ $redirect.Short }}" target="_blank">{{ $redirect.Short }}</a> (<a href="/delete/{{ $redirect.Short }}">Delete</a>)</li>
+    {{- end }}
+</ul>
+</body>
+</html>
