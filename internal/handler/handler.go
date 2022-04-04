@@ -16,7 +16,7 @@ func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.
 
 	authorized := g.Group("", gin.BasicAuth(accounts))
 	{
-		authorized.GET("/", indexPage(shortener))
+		authorized.GET("/", indexPage(shortener, forwardedPrefix))
 		authorized.GET("/create", serveCreationPage())
 		authorized.POST("/create", handleCreationPage(shortener))
 		authorized.GET("/delete/:short", serverDeletionPage())
@@ -53,7 +53,7 @@ func createGetHandler(shortener internal.UrlShortenerService) gin.HandlerFunc {
 	}
 }
 
-func indexPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func indexPage(shortener internal.UrlShortenerService, linkPrefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		list, err := shortener.List("00000000-0000-0000-0000-000000000000")
 		if err != nil {
@@ -61,7 +61,12 @@ func indexPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
 			return
 		}
 
-		c.HTML(http.StatusOK, "index.gohtml", list)
+		data := gin.H{
+			"redirects":  list,
+			"linkPrefix": linkPrefix,
+		}
+
+		c.HTML(http.StatusOK, "index.gohtml", data)
 	}
 }
 
