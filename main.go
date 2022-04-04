@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pscheid92/dwarferl/internal/config"
@@ -24,7 +25,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	accounts := gin.Accounts{conf.BasicAuthUser: conf.BasicAuthSecret}
+	cookies := sessions.NewCookieStore([]byte(conf.SessionSecret))
 
 	redirectsRepository := repository.NewDBRedirectsRepository(pool)
 	usersRepository := repository.NewDBUsersRepository(pool)
@@ -32,7 +33,7 @@ func main() {
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*.gohtml")
-	r = handler.SetupRoutes(r, conf.ForwardedPrefix, urlShortener, accounts)
+	r = handler.SetupRoutes(r, conf.ForwardedPrefix, urlShortener, cookies)
 
 	if err := r.Run(); err != nil {
 		log.Fatalf("error starting server: %v", err)

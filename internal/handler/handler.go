@@ -2,19 +2,28 @@ package handler
 
 import (
 	"errors"
+	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/pscheid92/dwarferl/internal"
 	"net/http"
 )
 
-func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.UrlShortenerService, accounts gin.Accounts) *gin.Engine {
+func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.UrlShortenerService, cookies sessions.CookieStore) *gin.Engine {
 	router.RedirectTrailingSlash = false
+
+	router.Use(sessions.Sessions("dwarferl_session", cookies))
 
 	g := router.Group(forwardedPrefix)
 	g.GET("/health", createHealthHandler())
 	g.GET("/:short", createGetHandler(shortener))
 
-	authorized := g.Group("", gin.BasicAuth(accounts))
+	g.GET("/login", createLoginPage(forwardedPrefix))
+	g.POST("/login", handleLogin(forwardedPrefix))
+
+	g.GET("/logout", handleLogout(forwardedPrefix))
+
+	authorized := g.Group("")
+	authorized.Use(authRequired(forwardedPrefix + "login"))
 	{
 		authorized.GET("/", indexPage(shortener, forwardedPrefix))
 		authorized.GET("/create", serveCreationPage())
@@ -28,6 +37,72 @@ func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.
 
 type RedirectCreationRequest struct {
 	Url string `form:"url"`
+}
+
+func createLoginPage(linkPrefix string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		userID := session.Get("user_id")
+
+		data := gin.H{
+			"user_id":     userID,
+			"link_prefix": linkPrefix,
+		}
+
+		c.HTML(http.StatusOK, "login.gohtml", data)
+	}
+}
+
+func handleLogin(linkPrefix string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		username := c.PostForm("username")
+		password := c.PostForm("password")
+
+		if username != "admin" || password != "admin" {
+			c.Redirect(http.StatusFound, linkPrefix)
+			return
+		}
+
+		session.Set("user_id", "00000000-0000-0000-0000-000000000000")
+		if err := session.Save(); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		c.Redirect(http.StatusFound, linkPrefix)
+	}
+}
+
+func handleLogout(linkPrefix string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		user := session.Get("user_id")
+		if user == nil {
+			c.Redirect(http.StatusBadRequest, linkPrefix+"login")
+			return
+		}
+
+		session.Delete("user_id")
+		if err := session.Save(); err != nil {
+			c.Redirect(http.StatusInternalServerError, linkPrefix+"login")
+			return
+		}
+
+		c.Redirect(http.StatusFound, linkPrefix+"login")
+	}
+}
+
+func authRequired(redirectPage string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		user := session.Get("user_id")
+		if user == nil {
+			c.Redirect(http.StatusTemporaryRedirect, redirectPage)
+			return
+		}
+		c.Next()
+	}
 }
 
 func createHealthHandler() gin.HandlerFunc {

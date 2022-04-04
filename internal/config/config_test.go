@@ -12,13 +12,14 @@ func TestGatherConfig(t *testing.T) {
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
 	})
 
-	t.Run("successfully read individualised env vars", func(t *testing.T) {
-		err := os.Setenv("DWARFERL_USER", "this_is_a_test")
+	t.Run("successfully read session secret", func(t *testing.T) {
+		err := os.Setenv("SESSION_SECRET", "test")
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
+		defer os.Unsetenv("SESSION_SECRET")
 
 		config, err := GatherConfig()
 		assert.NoErrorf(t, err, "unexpected error: %v", err)
-		assert.Equal(t, "this_is_a_test", config.BasicAuthUser)
+		assert.Equal(t, "test", config.SessionSecret)
 	})
 
 	t.Run("successfully appends trailing slash to forwarded prefix", func(t *testing.T) {

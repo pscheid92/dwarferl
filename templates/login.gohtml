@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shortener</title>
+</head>
+<body>
+<h1>Login Page</h1>
+
+{{ if .user_id }}
+    <h1>Hello {{ .user_id }}!</h1>
+{{ else }}
+    <form action="{{ .link_prefix }}login" method="POST">
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
+        <input type="submit" value="Login">
+    </form>
+{{ end }}
+
+</body>
+</html>

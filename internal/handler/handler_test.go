@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
@@ -14,18 +15,18 @@ import (
 )
 
 func TestCreateHealthHandler(t *testing.T) {
-	_, router := setupTest()
-	w := executeCall(router, "GET", "/health", "")
+	_, router, _ := setupTest()
+	w := executeCall(router, "GET", "/health", "", nil)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
 }
 
 func TestCreateGetHandler(t *testing.T) {
-	_, router := setupTest()
+	_, router, _ := setupTest()
 
-	w := executeCall(router, "GET", "/nonexistent", "")
+	w := executeCall(router, "GET", "/nonexistent", "", nil)
 	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
-	w = executeCall(router, "GET", "/"+testShort, "")
+	w = executeCall(router, "GET", "/"+testShort, "", nil)
 
 	location := w.Header().Get("Location")
 	cacheControl := w.Header().Get("Cache-Control")
@@ -39,62 +40,78 @@ func TestCreateGetHandler(t *testing.T) {
 }
 
 func TestIndexPage(t *testing.T) {
-	svc, router := setupTest()
+	svc, router, cookie := setupTest()
 
-	w := executeCall(router, "GET", "/", "")
+	w := executeCall(router, "GET", "/", "", cookie)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
 
 	svc.FailMode = true
-	w = executeCall(router, "GET", "/", "")
+	w = executeCall(router, "GET", "/", "", cookie)
 	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 }
 
 func TestServeCreationPage(t *testing.T) {
-	_, router := setupTest()
-	w := executeCall(router, "GET", "/create", "")
+	_, router, cookie := setupTest()
+	w := executeCall(router, "GET", "/create", "", cookie)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
 }
 
 func TestHandleCreationPage(t *testing.T) {
-	svc, router := setupTest()
+	svc, router, cookie := setupTest()
 
-	w := executeCall(router, "POST", "/create", "url="+testURL)
+	w := executeCall(router, "POST", "/create", "url="+testURL, cookie)
 	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 
 	svc.FailMode = true
-	w = executeCall(router, "POST", "/create", "url="+testURL)
+	w = executeCall(router, "POST", "/create", "url="+testURL, cookie)
 	assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 }
 
 func TestServeDeletionPage(t *testing.T) {
-	_, router := setupTest()
-	w := executeCall(router, "GET", "/delete/short", "")
+	_, router, cookie := setupTest()
+	w := executeCall(router, "GET", "/delete/short", "", cookie)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
 }
 
 func TestCreateDeleteHandler(t *testing.T) {
-	_, router := setupTest()
+	_, router, cookie := setupTest()
 
-	w := executeCall(router, "POST", "/delete/nonexistent", "")
+	w := executeCall(router, "POST", "/delete/nonexistent", "", cookie)
 	assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 404, got %d", w.Code)
 
-	w = executeCall(router, "POST", "/delete/"+testShort, "")
+	w = executeCall(router, "POST", "/delete/"+testShort, "", cookie)
 	assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 }
 
-func setupTest() (*urlShortenerServiceFake, *gin.Engine) {
+func setupTest() (*urlShortenerServiceFake, *gin.Engine, *http.Cookie) {
 	svc := newShortenerServiceFake()
 
+	cookies := sessions.NewCookieStore([]byte("test_secret"))
+
 	gin.SetMode(gin.TestMode)
-	accounts := gin.Accounts{"test": "test"}
 	router := gin.New()
 	router.LoadHTMLGlob("../../templates/*")
-	router = SetupRoutes(router, "/", svc, accounts)
+	router = SetupRoutes(router, "/", svc, cookies)
 
-	return svc, router
+	router.GET("/autologin", func(c *gin.Context) {
+		session := sessions.Default(c)
+		session.Set("user_id", testUser)
+
+		if err := session.Save(); err != nil {
+			c.AbortWithStatus(500)
+			return
+		}
+
+		c.Status(200)
+	})
+
+	w := executeCall(router, "GET", "/autologin", "", nil)
+	cookie := w.Result().Cookies()[0]
+
+	return svc, router, cookie
 }
 
-func executeCall(router *gin.Engine, method string, url string, body string) *httptest.ResponseRecorder {
+func executeCall(router *gin.Engine, method string, url string, body string, cookies *http.Cookie) *httptest.ResponseRecorder {
 	var reader io.Reader
 	if body != "" {
 		reader = strings.NewReader(body)
@@ -102,7 +119,11 @@ func executeCall(router *gin.Engine, method string, url string, body string) *ht
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, reader)
-	req.SetBasicAuth("test", "test")
+
+	if cookies != nil {
+		req.AddCookie(cookies)
+	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	router.ServeHTTP(w, req)
 	return w
