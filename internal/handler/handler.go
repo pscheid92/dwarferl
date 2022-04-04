@@ -18,9 +18,9 @@ func SetupRoutes(router *gin.Engine, forwardedPrefix string, shortener internal.
 	{
 		authorized.GET("/", indexPage(shortener, forwardedPrefix))
 		authorized.GET("/create", serveCreationPage())
-		authorized.POST("/create", handleCreationPage(shortener))
+		authorized.POST("/create", handleCreationPage(shortener, forwardedPrefix))
 		authorized.GET("/delete/:short", serverDeletionPage())
-		authorized.POST("/delete/:short", handleDeletionPage(shortener))
+		authorized.POST("/delete/:short", handleDeletionPage(shortener, forwardedPrefix))
 	}
 
 	return router
@@ -76,7 +76,7 @@ func serveCreationPage() gin.HandlerFunc {
 	}
 }
 
-func handleCreationPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func handleCreationPage(shortener internal.UrlShortenerService, linkPrefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request RedirectCreationRequest
 
@@ -96,7 +96,7 @@ func handleCreationPage(shortener internal.UrlShortenerService) gin.HandlerFunc 
 			return
 		}
 
-		c.Redirect(http.StatusFound, "/")
+		c.Redirect(http.StatusFound, linkPrefix)
 	}
 }
 
@@ -107,13 +107,13 @@ func serverDeletionPage() gin.HandlerFunc {
 	}
 }
 
-func handleDeletionPage(shortener internal.UrlShortenerService) gin.HandlerFunc {
+func handleDeletionPage(shortener internal.UrlShortenerService, linkPrefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
 		if err := shortener.DeleteShortURL(short); err != nil {
 			_ = c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
-		c.Redirect(http.StatusFound, "/")
+		c.Redirect(http.StatusFound, linkPrefix)
 	}
 }
