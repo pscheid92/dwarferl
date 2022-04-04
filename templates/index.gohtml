@@ -12,7 +12,7 @@
 
 <ul>
     {{- range $redirect := .redirects -}}
-        <li><a href="/{{ $redirect.Short }}" target="_blank">{{ $redirect.Short }}</a> (<a href="{{$.linkPrefix}}delete/{{ $redirect.Short }}">Delete</a>)</li>
+        <li><a href="{{$.linkPrefix}}{{ $redirect.Short }}" target="_blank">{{ $redirect.Short }}</a> (<a href="{{$.linkPrefix}}delete/{{ $redirect.Short }}">Delete</a>)</li>
     {{- end }}
 </ul>
 </body>
