@@ -8,7 +8,7 @@
 <body>
 <h1>Shortener</h1>
 
-<p><a href="/create">Shorten Link</a></p>
+<p><a href="{{$.linkPrefix}}/create">Shorten Link</a></p>
 
 <ul>
     {{- range $redirect := .redirects -}}
