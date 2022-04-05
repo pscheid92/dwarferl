@@ -93,7 +93,12 @@ func (s *Server) handleLoginPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		userID := session.Get("user_id")
-		c.HTML(http.StatusOK, "login.gohtml", userID)
+
+		data := gin.H{
+			"userID":     userID,
+			"linkPrefix": s.Config.ForwardedPrefix,
+		}
+		c.HTML(http.StatusOK, "login.gohtml", data)
 	}
 }
 

@@ -7,11 +7,11 @@
 <body>
 <h1>Login Page</h1>
 
-{{ if . }}
-    <p>Hello {{ . }}!</p>
-    <a href="/logout/google">Logout</a>
+{{ if .userID }}
+    <p>Hello {{ .userID }}!</p>
+    <a href="{{$.linkPrefix}}logout/google">Logout</a>
 {{ else }}
-    <a href="/auth/google">Login with Google</a>
+    <a href="{{$.linkPrefix}}auth/google">Login with Google</a>
 {{ end }}
 
 </body>
