@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/markbates/goth/gothic"
 	"github.com/pscheid92/dwarferl/internal/config"
 	"github.com/pscheid92/dwarferl/internal/hasher"
 	"github.com/pscheid92/dwarferl/internal/repository"
@@ -26,6 +27,7 @@ func main() {
 	defer pool.Close()
 
 	sessionStore := cookie.NewStore([]byte(conf.SessionSecret))
+	gothic.Store = cookie.NewStore([]byte(conf.SessionSecret))
 
 	redirectsRepository := repository.NewDBRedirectsRepository(pool)
 	usersRepository := repository.NewDBUsersRepository(pool)

@@ -7,9 +7,12 @@ import (
 )
 
 type Configuration struct {
-	ForwardedPrefix string `mapstructure:"forwarded_prefix"`
-	SessionSecret   string `mapstructure:"session_secret"`
-	TemplatePath    string `mapstructure:"template_path"`
+	ForwardedPrefix   string `mapstructure:"forwarded_prefix"`
+	SessionSecret     string `mapstructure:"session_secret"`
+	TemplatePath      string `mapstructure:"template_path"`
+	GoogleClientKey   string `mapstructure:"google_client_key"`
+	GoogleSecret      string `mapstructure:"google_secret"`
+	GoogleCallbackURL string `mapstructure:"google_callback_url"`
 }
 
 func GatherConfig() (Configuration, error) {
@@ -21,6 +24,11 @@ func GatherConfig() (Configuration, error) {
 
 	// template path
 	viper.SetDefault("template_path", "templates")
+
+	// google login settings
+	viper.SetDefault("google_client_key", "")
+	viper.SetDefault("google_secret", "")
+	viper.SetDefault("google_callback_url", "")
 
 	// environment variable bindings
 	viper.AutomaticEnv()

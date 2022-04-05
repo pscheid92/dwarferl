@@ -4,6 +4,9 @@ import (
 	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/google"
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/pscheid92/dwarferl/internal/config"
 	"net/http"
@@ -29,6 +32,8 @@ func New(config config.Configuration, store sessions.Store, shortener internal.U
 		Shortener:    shortener,
 	}
 
+	goth.UseProviders(google.New(config.GoogleClientKey, config.GoogleSecret, config.GoogleCallbackURL))
+
 	svr.LoadHTMLGlob(path.Join(config.TemplatePath, "*.gohtml"))
 	return svr
 }
@@ -42,10 +47,10 @@ func (s *Server) InitRoutes() {
 		public.GET("/health", s.handleHealth())
 		public.GET("/:short", s.handleRedirect())
 
-		public.GET("/login", s.handleGetLoginPage())
-		public.POST("/login", s.handlePostLoginPage())
-
-		public.GET("/logout", s.handleLogoutPage())
+		public.GET("/login", s.handleLoginPage())
+		public.GET("/auth/:provider/callback", s.handleAuthCallback())
+		public.GET("/auth/:provider", s.handleAuth())
+		public.GET("/logout/:provider", s.handleLogout())
 	}
 
 	// private routes
@@ -84,34 +89,24 @@ func (s *Server) handleRedirect() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) handleGetLoginPage() gin.HandlerFunc {
+func (s *Server) handleLoginPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		userID := session.Get("user_id")
-
-		data := gin.H{
-			"user_id":     userID,
-			"link_prefix": s.Config.ForwardedPrefix,
-		}
-
-		c.HTML(http.StatusOK, "login.gohtml", data)
+		c.HTML(http.StatusOK, "login.gohtml", userID)
 	}
 }
 
-func (s *Server) handlePostLoginPage() gin.HandlerFunc {
-	loginPage := s.Config.ForwardedPrefix + "login"
-
+func (s *Server) handleAuthCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		username := c.PostForm("username")
-		password := c.PostForm("password")
-
-		if username != "admin" || password != "admin" {
-			c.Redirect(http.StatusFound, loginPage)
+		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		session.Set("user_id", "00000000-0000-0000-0000-000000000000")
+		session := sessions.Default(c)
+		session.Set("user_id", user.UserID)
 		if err := session.Save(); err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
@@ -121,25 +116,41 @@ func (s *Server) handlePostLoginPage() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) handleLogoutPage() gin.HandlerFunc {
+func (s *Server) handleLogout() gin.HandlerFunc {
 	redirect := s.Config.ForwardedPrefix + "login"
 
 	return func(c *gin.Context) {
+		_ = gothic.Logout(c.Writer, c.Request)
+
 		session := sessions.Default(c)
-		user := session.Get("user_id")
-		if user == nil {
-			c.Redirect(http.StatusFound, redirect)
-			return
-		}
-
 		session.Clear()
-
 		if err := session.Save(); err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		c.Redirect(http.StatusFound, redirect)
+		c.Redirect(http.StatusTemporaryRedirect, redirect)
+	}
+}
+
+func (s *Server) handleAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		q := c.Request.URL.Query()
+		q.Add("provider", c.Param("provider"))
+		c.Request.URL.RawQuery = q.Encode()
+
+		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+		if err != nil {
+			gothic.BeginAuthHandler(c.Writer, c.Request)
+			return
+		}
+
+		session := sessions.Default(c)
+		session.Set("user_id", user.UserID)
+		if err := session.Save(); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

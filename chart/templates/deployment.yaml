@@ -43,6 +43,21 @@ spec:
                 secretKeyRef:
                   key: session_secret
                   name: dwarferl-secret
+            - name: GOOGLE_CLIENT_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: google_client_key
+                  name: dwarferl-secret
+            - name: GOOGLE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: google_secret
+                  name: dwarferl-secret
+            - name: GOOGLE_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  key: google_callback_url
+                  name: dwarferl-secret
           livenessProbe:
             httpGet:
               path: {{ .Values.forwardedPrefix }}health

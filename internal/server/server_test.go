@@ -22,14 +22,12 @@ const (
 )
 
 func TestHandleHealth(t *testing.T) {
-	t.Parallel()
 	srv, _, _ := setupTestServer()
 	w := srv.call("GET", "/health", "", nil)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200")
 }
 
 func TestHandleRedirect(t *testing.T) {
-	t.Parallel()
 	srv, _, _ := setupTestServer()
 
 	t.Run("non-existent redirect", func(t *testing.T) {
@@ -53,52 +51,12 @@ func TestHandleRedirect(t *testing.T) {
 }
 
 func TestHandleGetLoginPage(t *testing.T) {
-	t.Parallel()
 	srv, _, _ := setupTestServer()
 	w := srv.call("GET", "/login", "", nil)
 	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d %v", w.Code, w)
 }
 
-func TestHandlePostLoginPage(t *testing.T) {
-	t.Parallel()
-	srv, _, _ := setupTestServer()
-
-	t.Run("login with wrong credentials", func(t *testing.T) {
-		w := srv.call("POST", "/login", "username=wrong&password=wrong", nil)
-		assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
-		assert.NotContainsf(t, extractCookieNames(t, w), "dwarferl_session", "Expected session cookie to be missing")
-	})
-
-	t.Run("login successfully", func(t *testing.T) {
-		w := srv.call("POST", "/login", "username=admin&password=admin", nil)
-		assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
-		assert.Containsf(t, extractCookieNames(t, w), "dwarferl_session", "Expected session cookie to be present")
-	})
-}
-
-func TestHandleLogoutPage(t *testing.T) {
-	t.Parallel()
-	srv, cookies, _ := setupTestServer()
-
-	t.Run("logout without being logged in", func(t *testing.T) {
-		w := srv.call("GET", "/logout", "", nil)
-		assert.Equalf(t, http.StatusFound, w.Code, "Expectet status code 302, got %d", w.Code)
-		assert.NotContainsf(t, extractCookieNames(t, w), "dwarferl_session", "Expected session cookie to be missing")
-	})
-
-	t.Run("logout successfully", func(t *testing.T) {
-		w := srv.call("GET", "/logout", "", cookies)
-		assert.Equalf(t, http.StatusFound, w.Code, "Expectet status code 302, got %d", w.Code)
-
-		newCookies := w.Result().Cookies()
-		w = srv.call("GET", "/", "", newCookies)
-		assert.Equalf(t, http.StatusFound, w.Code, "Expectet status code 302, got %d", w.Code)
-		assert.Equalf(t, "/login", w.Header().Get("Location"), "Expected redirect to login page")
-	})
-}
-
 func TestHandleIndexPage(t *testing.T) {
-	t.Parallel()
 	srv, cookies, shortener := setupTestServer()
 
 	t.Run("index page demands login", func(t *testing.T) {
@@ -119,7 +77,6 @@ func TestHandleIndexPage(t *testing.T) {
 }
 
 func TestHandleGetCreationPage(t *testing.T) {
-	t.Parallel()
 	srv, cookies, _ := setupTestServer()
 
 	t.Run("creation page demands login", func(t *testing.T) {
@@ -135,7 +92,6 @@ func TestHandleGetCreationPage(t *testing.T) {
 }
 
 func TestHandlePostCreationPage(t *testing.T) {
-	t.Parallel()
 	srv, cookies, shortener := setupTestServer()
 
 	t.Run("creation post demands login", func(t *testing.T) {
@@ -156,7 +112,6 @@ func TestHandlePostCreationPage(t *testing.T) {
 }
 
 func TestHandleGetDeletionPage(t *testing.T) {
-	t.Parallel()
 	srv, cookies, _ := setupTestServer()
 
 	t.Run("deletion page demands login", func(t *testing.T) {
@@ -171,7 +126,6 @@ func TestHandleGetDeletionPage(t *testing.T) {
 }
 
 func TestHandlePostDeletionPage(t *testing.T) {
-	t.Parallel()
 	srv, cookies, _ := setupTestServer()
 
 	t.Run("deletion post demands login", func(t *testing.T) {
@@ -239,16 +193,6 @@ func (s *Server) call(method string, url string, body string, cookies []*http.Co
 
 	s.ServeHTTP(w, r)
 	return w
-}
-
-func extractCookieNames(t *testing.T, w *httptest.ResponseRecorder) []string {
-	t.Helper()
-
-	names := make([]string, 0)
-	for _, c := range w.Result().Cookies() {
-		names = append(names, c.Name)
-	}
-	return names
 }
 
 type urlShortenerServiceFake struct {
