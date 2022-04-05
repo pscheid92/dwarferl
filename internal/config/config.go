@@ -7,22 +7,20 @@ import (
 )
 
 type Configuration struct {
-	BasicAuthUser   string `mapstructure:"basic_auth_user"`
-	BasicAuthSecret string `mapstructure:"basic_auth_secret"`
 	ForwardedPrefix string `mapstructure:"forwarded_prefix"`
 	SessionSecret   string `mapstructure:"session_secret"`
+	TemplatePath    string `mapstructure:"template_path"`
 }
 
 func GatherConfig() (Configuration, error) {
-	// basic auth
-	viper.SetDefault("basic_auth_user", "admin")
-	viper.SetDefault("basic_auth_secret", "admin")
-
 	// forwarded prefix
 	viper.SetDefault("forwarded_prefix", "/")
 
 	// session secret
 	viper.SetDefault("session_secret", "secret")
+
+	// template path
+	viper.SetDefault("template_path", "templates")
 
 	// environment variable bindings
 	viper.AutomaticEnv()
