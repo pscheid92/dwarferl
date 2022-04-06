@@ -12,11 +12,16 @@ import (
 
 const deleteRedirect = `-- name: DeleteRedirect :exec
 DELETE FROM redirects
-WHERE short = $1
+WHERE short = $1 and user_id = $2
 `
 
-func (q *Queries) DeleteRedirect(ctx context.Context, short string) error {
-	_, err := q.db.Exec(ctx, deleteRedirect, short)
+type DeleteRedirectParams struct {
+	Short  string
+	UserID string
+}
+
+func (q *Queries) DeleteRedirect(ctx context.Context, arg DeleteRedirectParams) error {
+	_, err := q.db.Exec(ctx, deleteRedirect, arg.Short, arg.UserID)
 	return err
 }
 

@@ -16,4 +16,4 @@ WHERE short = $1;
 
 -- name: DeleteRedirect :exec
 DELETE FROM redirects
-WHERE short = $1;
+WHERE short = $1 and user_id = $2;

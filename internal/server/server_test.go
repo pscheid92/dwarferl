@@ -151,15 +151,16 @@ func setupTestServer() (*Server, []*http.Cookie, *urlShortenerServiceFake) {
 		TemplatePath:    "../../templates",
 	}
 
-	svc := newShortenerServiceFake()
+	shortener := &urlShortenerServiceFake{}
+	users := &usersServiceFake{}
 	store := cookie.NewStore([]byte(c.SessionSecret))
 
 	gin.SetMode(gin.TestMode)
-	svr := New(c, store, svc)
+	svr := New(c, store, shortener, users)
 	svr.InitRoutes()
 
 	cookies := svr.autologin()
-	return svr, cookies, svc
+	return svr, cookies, shortener
 }
 
 func (s *Server) autologin() []*http.Cookie {
@@ -199,10 +200,6 @@ type urlShortenerServiceFake struct {
 	FailMode bool
 }
 
-func newShortenerServiceFake() *urlShortenerServiceFake {
-	return &urlShortenerServiceFake{FailMode: false}
-}
-
 func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error) {
 	if s.FailMode {
 		return nil, errors.New("fake error")
@@ -222,7 +219,7 @@ func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error
 	return []internal.Redirect{redirect}, nil
 }
 
-func (s urlShortenerServiceFake) ShortenURL(url string) (internal.Redirect, error) {
+func (s urlShortenerServiceFake) ShortenURL(url string, userID string) (internal.Redirect, error) {
 	if s.FailMode {
 		return internal.Redirect{}, errors.New("fake error")
 	}
@@ -253,7 +250,7 @@ func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
 	return testURL, nil
 }
 
-func (s urlShortenerServiceFake) DeleteShortURL(short string) error {
+func (s urlShortenerServiceFake) DeleteShortURL(short string, userID string) error {
 	if s.FailMode {
 		return errors.New("fake error")
 	}
@@ -263,4 +260,20 @@ func (s urlShortenerServiceFake) DeleteShortURL(short string) error {
 	}
 
 	return nil
+}
+
+type usersServiceFake struct {
+	FailMode bool
+}
+
+func (u usersServiceFake) CreateWithGoogleID(googleID string, email string) (internal.User, error) {
+	// TODO: find a way to test goth/gothic
+	// Not implemented, since we cannot test goth/gothic here
+	panic("create with google id - implement me")
+}
+
+func (u usersServiceFake) GetOrCreateByGoogle(googleID string, email string) (internal.User, error) {
+	// TODO: find a way to test goth/gothic
+	// Not implemented, since we cannot test goth/gothic here
+	panic("get or create by google - implement me")
 }

@@ -15,8 +15,8 @@ func NewDBRedirectsRepository(pool *pgxpool.Pool) *DBRedirectsRepository {
 	return &DBRedirectsRepository{queries: database.New(pool)}
 }
 
-func (d DBRedirectsRepository) List(user internal.User) ([]internal.Redirect, error) {
-	redirectsDTO, err := d.queries.ListRedirectsByUserId(context.Background(), user.ID)
+func (d DBRedirectsRepository) List(userID string) ([]internal.Redirect, error) {
+	redirectsDTO, err := d.queries.ListRedirectsByUserId(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +56,9 @@ func (d DBRedirectsRepository) Expand(short string) (string, error) {
 	return url, nil
 }
 
-func (d DBRedirectsRepository) Delete(short string) error {
-	err := d.queries.DeleteRedirect(context.Background(), short)
-	if err != nil {
-		return err
-	}
-	return nil
+func (d DBRedirectsRepository) Delete(short string, userID string) error {
+	return d.queries.DeleteRedirect(context.Background(), database.DeleteRedirectParams{
+		Short:  short,
+		UserID: userID,
+	})
 }

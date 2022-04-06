@@ -4,11 +4,12 @@ import (
 	"time"
 )
 
-type Hasher = func(User, string) string
+type Hasher = func(string, string) string
 
 type User struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	GoogleID string `json:"google_id"`
 }
 
 type Redirect struct {
@@ -19,19 +20,25 @@ type Redirect struct {
 }
 
 type UsersRepository interface {
-	Get(id string) (User, error)
+	Save(user User) error
+	GetByGoogleID(googleID string) (User, error)
 }
 
 type RedirectRepository interface {
-	List(user User) ([]Redirect, error)
+	List(userID string) ([]Redirect, error)
 	Save(redirect Redirect) error
 	Expand(short string) (string, error)
-	Delete(short string) error
+	Delete(short string, userID string) error
 }
 
 type UrlShortenerService interface {
 	List(userID string) ([]Redirect, error)
-	ShortenURL(url string) (Redirect, error)
+	ShortenURL(url string, userID string) (Redirect, error)
 	ExpandShortURL(short string) (string, error)
-	DeleteShortURL(short string) error
+	DeleteShortURL(short string, userID string) error
+}
+
+type UsersService interface {
+	CreateWithGoogleID(googleID string, email string) (User, error)
+	GetOrCreateByGoogle(googleID string, email string) (User, error)
 }

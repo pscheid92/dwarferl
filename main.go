@@ -11,6 +11,7 @@ import (
 	"github.com/pscheid92/dwarferl/internal/repository"
 	"github.com/pscheid92/dwarferl/internal/server"
 	"github.com/pscheid92/dwarferl/internal/shortener"
+	"github.com/pscheid92/dwarferl/internal/users"
 	"log"
 )
 
@@ -30,10 +31,12 @@ func main() {
 	gothic.Store = cookie.NewStore([]byte(conf.SessionSecret))
 
 	redirectsRepository := repository.NewDBRedirectsRepository(pool)
-	usersRepository := repository.NewDBUsersRepository(pool)
-	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository, usersRepository)
+	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository)
 
-	svr := server.New(conf, sessionStore, urlShortener)
+	usersRepository := repository.NewDBUsersRepository(pool)
+	usersService := users.NewService(usersRepository)
+
+	svr := server.New(conf, sessionStore, urlShortener, usersService)
 	svr.Use(gin.Logger(), gin.Recovery())
 	svr.InitRoutes()
 

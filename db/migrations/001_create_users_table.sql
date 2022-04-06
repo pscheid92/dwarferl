@@ -1,7 +1,8 @@
 -- Write your migrate up statements here
 create table "users" (
     id text primary key,
-    email text not null unique
+    email text not null unique,
+    google_provider_id text not null unique
 );
 
 ---- create above / drop below ----

@@ -9,13 +9,30 @@ import (
 	"context"
 )
 
-const getUserById = `-- name: GetUserById :one
-select id, email from users where id = $1
+const getUserByGoogleId = `-- name: GetUserByGoogleId :one
+select id, email, google_provider_id from users where google_provider_id = $1
 `
 
-func (q *Queries) GetUserById(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserById, id)
+func (q *Queries) GetUserByGoogleId(ctx context.Context, googleProviderID string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByGoogleId, googleProviderID)
 	var i User
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.Email, &i.GoogleProviderID)
 	return i, err
+}
+
+const saveUser = `-- name: SaveUser :exec
+INSERT INTO users (id, email, google_provider_id)
+VALUES ($1, $2, $3)
+ON CONFLICT (id) DO UPDATE SET email = excluded.email, google_provider_id = excluded.google_provider_id
+`
+
+type SaveUserParams struct {
+	ID               string
+	Email            string
+	GoogleProviderID string
+}
+
+func (q *Queries) SaveUser(ctx context.Context, arg SaveUserParams) error {
+	_, err := q.db.Exec(ctx, saveUser, arg.ID, arg.Email, arg.GoogleProviderID)
+	return err
 }

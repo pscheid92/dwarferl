@@ -22,14 +22,16 @@ type Server struct {
 
 	// services
 	Shortener internal.UrlShortenerService
+	Users     internal.UsersService
 }
 
-func New(config config.Configuration, store sessions.Store, shortener internal.UrlShortenerService) *Server {
+func New(config config.Configuration, store sessions.Store, shortener internal.UrlShortenerService, users internal.UsersService) *Server {
 	svr := &Server{
 		Engine:       gin.New(),
 		Config:       config,
 		SessionStore: store,
 		Shortener:    shortener,
+		Users:        users,
 	}
 
 	goth.UseProviders(google.New(config.GoogleClientKey, config.GoogleSecret, config.GoogleCallbackURL))
@@ -104,14 +106,20 @@ func (s *Server) handleLoginPage() gin.HandlerFunc {
 
 func (s *Server) handleAuthCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+		externalUser, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		user, err := s.Users.GetOrCreateByGoogle(externalUser.UserID, externalUser.Email)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 		session := sessions.Default(c)
-		session.Set("user_id", user.UserID)
+		session.Set("user_id", user.ID)
 		if err := session.Save(); err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
@@ -161,7 +169,9 @@ func (s *Server) handleAuth() gin.HandlerFunc {
 
 func (s *Server) handleIndexPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		list, err := s.Shortener.List("00000000-0000-0000-0000-000000000000")
+		userID := c.GetString("user_id")
+
+		list, err := s.Shortener.List(userID)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -183,23 +193,23 @@ func (s *Server) handleGetCreationPage() gin.HandlerFunc {
 }
 
 func (s *Server) handlePostCreationPage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var request struct {
-			Url string `form:"url"`
-		}
+	type request struct {
+		Url string `form:"url"`
+	}
 
-		err := c.Bind(&request)
-		if err != nil {
+	return func(c *gin.Context) {
+		var req request
+		if err := c.Bind(&req); err != nil {
 			return
 		}
 
-		if request.Url == "" {
+		if req.Url == "" {
 			_ = c.AbortWithError(http.StatusBadRequest, errors.New("url is required"))
 			return
 		}
 
-		_, err = s.Shortener.ShortenURL(request.Url)
-		if err != nil {
+		userID := c.GetString("user_id")
+		if _, err := s.Shortener.ShortenURL(req.Url, userID); err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -218,7 +228,8 @@ func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 func (s *Server) handlePostDeletionPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		short := c.Param("short")
-		if err := s.Shortener.DeleteShortURL(short); err != nil {
+		userID := c.GetString("user_id")
+		if err := s.Shortener.DeleteShortURL(short, userID); err != nil {
 			_ = c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
@@ -231,11 +242,13 @@ func (s *Server) authRequiredMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
-		user := session.Get("user_id")
-		if user == nil {
+		userID := session.Get("user_id")
+		if userID == nil {
 			c.Redirect(http.StatusFound, loginPage)
 			return
 		}
+
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }

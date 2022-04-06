@@ -8,24 +8,17 @@ import (
 type UrlShortenerService struct {
 	hasher    internal.Hasher
 	redirects internal.RedirectRepository
-	users     internal.UsersRepository
 }
 
-func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectRepository, users internal.UsersRepository) UrlShortenerService {
+func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectRepository) UrlShortenerService {
 	return UrlShortenerService{
 		hasher:    hasher,
 		redirects: redirects,
-		users:     users,
 	}
 }
 
 func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
-	user, err := u.users.Get(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	list, err := u.redirects.List(user)
+	list, err := u.redirects.List(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,13 +26,10 @@ func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
 	return list, nil
 }
 
-func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
-	user, _ := u.users.Get("00000000-0000-0000-0000-000000000000")
-	short := u.hasher(user, url)
-
+func (u UrlShortenerService) ShortenURL(url string, userID string) (internal.Redirect, error) {
 	redirect := internal.Redirect{
-		UserID:    user.ID,
-		Short:     short,
+		UserID:    userID,
+		Short:     u.hasher(userID, url),
 		URL:       url,
 		CreatedAt: time.Now(),
 	}
@@ -47,7 +37,6 @@ func (u UrlShortenerService) ShortenURL(url string) (internal.Redirect, error) {
 	if err := u.redirects.Save(redirect); err != nil {
 		return redirect, err
 	}
-
 	return redirect, nil
 }
 
@@ -59,6 +48,6 @@ func (u UrlShortenerService) ExpandShortURL(short string) (string, error) {
 	return redirect, nil
 }
 
-func (u UrlShortenerService) DeleteShortURL(short string) error {
-	return u.redirects.Delete(short)
+func (u UrlShortenerService) DeleteShortURL(short string, userID string) error {
+	return u.redirects.Delete(short, userID)
 }
