@@ -1,9 +1,13 @@
 {{define "content"}}
-    <h1>Create new short URL</h1>
-    <form method="POST">
-        <label for="url">URL:</label>
-        <input id="url" type="text" name="url" placeholder="URL">
-        <input type="submit" value="Shorten">
+    <h3>Let's shorten a link!</h3>
+
+    <form method="post" class="pt-5">
+        <div class="mb-3">
+            <label for="long-link" class="form-label">Long Link:</label>
+            <input type="url" class="form-control" id="long-link" name="url" aria-describedby="longUrlHelp" placeholder="https://github.com/pscheid92/dwarferl">
+            <div id="longUrlHelp" class="form-text">This is the long link you want to shorten.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Shorten</button>
     </form>
 {{end}}
 
