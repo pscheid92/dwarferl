@@ -119,6 +119,11 @@ func TestHandleGetDeletionPage(t *testing.T) {
 		assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 	})
 
+	t.Run("deletion of nonexistend short fails", func(t *testing.T) {
+		w := srv.call("GET", "/delete/nonexistent", "", cookies)
+		assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
+	})
+
 	t.Run("deletion page served successfully", func(t *testing.T) {
 		w := srv.call("GET", "/delete/"+testShort, "", cookies)
 		assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d", w.Code)
@@ -219,6 +224,24 @@ func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error
 	return []internal.Redirect{redirect}, nil
 }
 
+func (s urlShortenerServiceFake) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+	if s.FailMode {
+		return internal.Redirect{}, errors.New("fake error")
+	}
+
+	if short != "short" || userID != testUser {
+		return internal.Redirect{}, errors.New("not found")
+	}
+
+	redirect := internal.Redirect{
+		Short:     testShort,
+		URL:       testURL,
+		UserID:    testUser,
+		CreatedAt: time.Now(),
+	}
+	return redirect, nil
+}
+
 func (s urlShortenerServiceFake) ShortenURL(url string, userID string) (internal.Redirect, error) {
 	if s.FailMode {
 		return internal.Redirect{}, errors.New("fake error")
@@ -234,7 +257,6 @@ func (s urlShortenerServiceFake) ShortenURL(url string, userID string) (internal
 		UserID:    testUser,
 		CreatedAt: time.Now(),
 	}
-
 	return redirect, nil
 }
 

@@ -26,6 +26,14 @@ func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
 	return list, nil
 }
 
+func (u UrlShortenerService) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+	redirect, err := u.redirects.GetRedirectByShort(short, userID)
+	if err != nil {
+		return internal.Redirect{}, err
+	}
+	return redirect, nil
+}
+
 func (u UrlShortenerService) ShortenURL(url string, userID string) (internal.Redirect, error) {
 	redirect := internal.Redirect{
 		UserID:    userID,

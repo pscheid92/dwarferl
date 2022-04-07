@@ -1,11 +1,30 @@
+{{- /*gotype: github.com/pscheid92/dwarferl/internal.Redirect*/ -}}
 {{define "content"}}
     <h3>Do you want to delete this short link?</h3>
 
+    {{ with .redirect }}
+    <div>
+        <div class="py-2">
+            <label for="short" class="form-label">Short:</label>
+            <input type="text" class="form-control" id="short" value="{{ .Short }}" readonly>
+        </div>
 
-    <form method="post" class="pt-2">
-        <button type="submit" class="btn btn-danger">Delete</button>
-        <a class="btn btn-outline-secondary" href="{{$.linkPrefix}}" role="button">Abort</a>
-    </form>
+        <div class="py-2">
+            <label for="url" class="form-label">Long Link:</label>
+            <input type="url" class="form-control" id="url" value="{{ .URL }}" readonly>
+        </div>
+
+        <div class="py-2">
+            <label for="created-at" class="form-label">Created At:</label>
+            <input type="text" class="form-control" id="created-at" value="{{ .CreatedAt.Format "Mon Jan 2 15:04:05 MST 2006" }}" readonly>
+        </div>
+
+        <form method="post" class="pt-3">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a class="btn btn-outline-secondary" href="{{$.linkPrefix}}" role="button">Abort</a>
+        </form>
+    </div>
+    {{ end }}
 {{end}}
 
 {{template "base" .}}

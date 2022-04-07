@@ -3,6 +3,11 @@ SELECT *
 FROM redirects
 WHERE user_id = $1;
 
+-- name: GetRedirectByShort :one
+SELECT *
+FROM redirects
+WHERE short = $1 and user_id = $2;
+
 -- name: SaveRedirect :exec
 INSERT INTO redirects (short, url, user_id, created_at)
 VALUES ($1, $2, $3, $4)

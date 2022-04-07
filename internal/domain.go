@@ -26,6 +26,7 @@ type UsersRepository interface {
 
 type RedirectRepository interface {
 	List(userID string) ([]Redirect, error)
+	GetRedirectByShort(short string, userID string) (Redirect, error)
 	Save(redirect Redirect) error
 	Expand(short string) (string, error)
 	Delete(short string, userID string) error
@@ -33,6 +34,7 @@ type RedirectRepository interface {
 
 type UrlShortenerService interface {
 	List(userID string) ([]Redirect, error)
+	GetRedirectByShort(short string, userID string) (Redirect, error)
 	ShortenURL(url string, userID string) (Redirect, error)
 	ExpandShortURL(short string) (string, error)
 	DeleteShortURL(short string, userID string) error

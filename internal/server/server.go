@@ -253,8 +253,17 @@ func (s *Server) handlePostCreationPage() gin.HandlerFunc {
 
 func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		short := c.Param("short")
+		userID := c.GetString("user_id")
+
+		redirect, err := s.Shortener.GetRedirectByShort(short, userID)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
 		data := gin.H{
-			"short":      c.Param("short"),
+			"redirect":   redirect,
 			"linkPrefix": s.Config.ForwardedPrefix,
 		}
 		c.HTML(http.StatusOK, "delete.gohtml", data)

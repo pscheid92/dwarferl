@@ -16,22 +16,26 @@ func NewDBRedirectsRepository(pool *pgxpool.Pool) *DBRedirectsRepository {
 }
 
 func (d DBRedirectsRepository) List(userID string) ([]internal.Redirect, error) {
-	redirectsDTO, err := d.queries.ListRedirectsByUserId(context.Background(), userID)
+	dtos, err := d.queries.ListRedirectsByUserId(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
 
-	redirects := make([]internal.Redirect, len(redirectsDTO))
-	for i, r := range redirectsDTO {
-		redirects[i] = internal.Redirect{
-			Short:     r.Short,
-			URL:       r.Url,
-			UserID:    r.UserID,
-			CreatedAt: r.CreatedAt,
-		}
+	redirects := make([]internal.Redirect, len(dtos))
+	for i, r := range dtos {
+		redirects[i] = dtoToRedirect(r)
 	}
 
 	return redirects, nil
+}
+
+func (d DBRedirectsRepository) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+	args := database.GetRedirectByShortParams{Short: short, UserID: userID}
+	dto, err := d.queries.GetRedirectByShort(context.Background(), args)
+	if err != nil {
+		return internal.Redirect{}, err
+	}
+	return dtoToRedirect(dto), nil
 }
 
 func (d DBRedirectsRepository) Save(redirect internal.Redirect) error {
@@ -61,4 +65,13 @@ func (d DBRedirectsRepository) Delete(short string, userID string) error {
 		Short:  short,
 		UserID: userID,
 	})
+}
+
+func dtoToRedirect(dto database.Redirect) internal.Redirect {
+	return internal.Redirect{
+		Short:     dto.Short,
+		URL:       dto.Url,
+		UserID:    dto.UserID,
+		CreatedAt: dto.CreatedAt,
+	}
 }

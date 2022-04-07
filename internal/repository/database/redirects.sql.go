@@ -38,6 +38,29 @@ func (q *Queries) ExpandRedirect(ctx context.Context, short string) (string, err
 	return url, err
 }
 
+const getRedirectByShort = `-- name: GetRedirectByShort :one
+SELECT short, url, user_id, created_at
+FROM redirects
+WHERE short = $1 and user_id = $2
+`
+
+type GetRedirectByShortParams struct {
+	Short  string
+	UserID string
+}
+
+func (q *Queries) GetRedirectByShort(ctx context.Context, arg GetRedirectByShortParams) (Redirect, error) {
+	row := q.db.QueryRow(ctx, getRedirectByShort, arg.Short, arg.UserID)
+	var i Redirect
+	err := row.Scan(
+		&i.Short,
+		&i.Url,
+		&i.UserID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listRedirectsByUserId = `-- name: ListRedirectsByUserId :many
 SELECT short, url, user_id, created_at
 FROM redirects

@@ -5,6 +5,7 @@ import (
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 const (
@@ -21,6 +22,29 @@ func TestUrlShortenerService_List(t *testing.T) {
 
 	redirects.FailMode = true
 	_, err = sut.List(testUser)
+	assert.Errorf(t, err, "Expected error, got nil")
+}
+
+func TestUrlShortenerService_GetRedirectByShort(t *testing.T) {
+	redirects, sut := setupService()
+
+	// correct user and short
+	redirect, err := sut.GetRedirectByShort("short", testUser)
+	assert.NoErrorf(t, err, "get redirect by short should not return error")
+	assert.Equalf(t, testURL, redirect.URL, "get redirect by short should return correct redirect")
+	assert.Equalf(t, testUser, redirect.UserID, "get redirect by short should return correct redirect")
+
+	// false user correct short
+	redirect, err = sut.GetRedirectByShort("short", "nonexistent")
+	assert.Errorf(t, err, "Expected error, got nil")
+
+	// user and false short
+	redirect, err = sut.GetRedirectByShort("nonexistent", testUser)
+	assert.Errorf(t, err, "Expected error, got nil")
+
+	// error
+	redirects.FailMode = true
+	_, err = sut.GetRedirectByShort("short", testUser)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
@@ -98,6 +122,24 @@ func (r redirectRepoFake) List(user string) ([]internal.Redirect, error) {
 	result := make([]internal.Redirect, 0, len(r.redirects))
 	for _, redirect := range r.redirects {
 		result = append(result, redirect)
+	}
+	return result, nil
+}
+
+func (r redirectRepoFake) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+	if r.FailMode {
+		return internal.Redirect{}, errors.New("fake error")
+	}
+
+	if short != "short" || userID != testUser {
+		return internal.Redirect{}, errors.New("not found")
+	}
+
+	result := internal.Redirect{
+		Short:     "short",
+		URL:       testURL,
+		UserID:    testUser,
+		CreatedAt: time.Now().Add(-time.Hour),
 	}
 	return result, nil
 }
