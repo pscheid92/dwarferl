@@ -1,18 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Shortener</title>
-</head>
-<body>
-<h1>Login Page</h1>
+{{define "content"}}
+    <h1>Login Page</h1>
+    {{ if .userID }}
+        <p>Hello {{ .userID }}!</p>
+        <a href="{{$.linkPrefix}}logout/google">Logout</a>
+    {{ else }}
+        <a href="{{$.linkPrefix}}auth/google">Login with Google</a>
+    {{ end }}
+{{end}}
 
-{{ if .userID }}
-    <p>Hello {{ .userID }}!</p>
-    <a href="{{$.linkPrefix}}logout/google">Logout</a>
-{{ else }}
-    <a href="{{$.linkPrefix}}auth/google">Login with Google</a>
-{{ end }}
-
-</body>
-</html>
+{{template "base" .}}

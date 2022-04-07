@@ -3,6 +3,7 @@ module github.com/pscheid92/dwarferl
 go 1.18
 
 require (
+	github.com/gin-contrib/multitemplate v0.0.0-20220323084503-710510e67c20
 	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/google/uuid v1.1.2

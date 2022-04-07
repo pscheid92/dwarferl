@@ -1,0 +1,10 @@
+{{define "navigation"}}
+    <a href="{{$.linkPrefix}}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <span class="fs-4">Dwarferl</span>
+    </a>
+
+    <ul class="nav nav-pills">
+        <li class="nav-item"><a class="nav-link" href="{{$.linkPrefix}}create" role="button">Shorten</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{$.linkPrefix}}logout/google" role="button">Logout</a></li>
+    </ul>
+{{end}}

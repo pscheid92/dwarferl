@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
@@ -10,7 +11,7 @@ import (
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/pscheid92/dwarferl/internal/config"
 	"net/http"
-	"path"
+	"path/filepath"
 )
 
 type Server struct {
@@ -35,9 +36,37 @@ func New(config config.Configuration, store sessions.Store, shortener internal.U
 	}
 
 	goth.UseProviders(google.New(config.GoogleClientKey, config.GoogleSecret, config.GoogleCallbackURL))
-
-	svr.LoadHTMLGlob(path.Join(config.TemplatePath, "*.gohtml"))
+	svr.initHTMLRender()
 	return svr
+}
+
+func (s *Server) initHTMLRender() {
+	renderer := multitemplate.NewRenderer()
+
+	// load the layout files
+	layouts, err := filepath.Glob(s.Config.TemplatePath + "/layouts/*.gohtml")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// load the actual pages
+	pages, err := filepath.Glob(s.Config.TemplatePath + "/*.gohtml")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// combine each actual page with layout files
+	for _, page := range pages {
+		name := filepath.Base(page)
+
+		templates := make([]string, len(layouts)+1)
+		templates[0] = page
+		copy(templates[1:], layouts)
+
+		renderer.AddFromFiles(name, templates...)
+	}
+
+	s.HTMLRender = renderer
 }
 
 func (s *Server) InitRoutes() {
@@ -181,14 +210,16 @@ func (s *Server) handleIndexPage() gin.HandlerFunc {
 			"redirects":  list,
 			"linkPrefix": s.Config.ForwardedPrefix,
 		}
-
 		c.HTML(http.StatusOK, "index.gohtml", data)
 	}
 }
 
 func (s *Server) handleGetCreationPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.HTML(http.StatusOK, "create.gohtml", nil)
+		data := gin.H{
+			"linkPrefix": s.Config.ForwardedPrefix,
+		}
+		c.HTML(http.StatusOK, "create.gohtml", data)
 	}
 }
 
@@ -220,8 +251,11 @@ func (s *Server) handlePostCreationPage() gin.HandlerFunc {
 
 func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		short := c.Param("short")
-		c.HTML(http.StatusOK, "delete.gohtml", short)
+		data := gin.H{
+			"short":      c.Param("short"),
+			"linkPrefix": s.Config.ForwardedPrefix,
+		}
+		c.HTML(http.StatusOK, "delete.gohtml", data)
 	}
 }
 

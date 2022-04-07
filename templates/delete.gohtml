@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Shortener</title>
-</head>
-<body>
-<h1>Do you want to delete this short URL?</h1>
-<form method="POST">
-    <input type="submit" value="Confirm">
-</form>
-</body>
-</html>
+
+{{define "content"}}
+    <h1>Do you want to delete this short URL?</h1>
+    <form method="POST">
+        <input type="submit" value="Confirm">
+    </form>
+{{end}}
+
+{{template "base" .}}
