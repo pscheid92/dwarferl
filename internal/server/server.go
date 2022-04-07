@@ -127,6 +127,11 @@ func (s *Server) handleLoginPage() gin.HandlerFunc {
 		session := sessions.Default(c)
 		userID := session.Get("user_id")
 
+		if userID != nil {
+			c.Redirect(http.StatusFound, s.Config.ForwardedPrefix)
+			return
+		}
+
 		data := gin.H{
 			"userID":     userID,
 			"linkPrefix": s.Config.ForwardedPrefix,
@@ -210,6 +215,7 @@ func (s *Server) handleIndexPage() gin.HandlerFunc {
 
 		data := gin.H{
 			"redirects":  list,
+			"userID":     userID,
 			"linkPrefix": s.Config.ForwardedPrefix,
 		}
 		c.HTML(http.StatusOK, "index.gohtml", data)
@@ -218,7 +224,10 @@ func (s *Server) handleIndexPage() gin.HandlerFunc {
 
 func (s *Server) handleGetCreationPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userID := c.GetString("user_id")
+
 		data := gin.H{
+			"userID":     userID,
 			"linkPrefix": s.Config.ForwardedPrefix,
 		}
 		c.HTML(http.StatusOK, "create.gohtml", data)
@@ -264,6 +273,7 @@ func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 
 		data := gin.H{
 			"redirect":   redirect,
+			"userID":     userID,
 			"linkPrefix": s.Config.ForwardedPrefix,
 		}
 		c.HTML(http.StatusOK, "delete.gohtml", data)

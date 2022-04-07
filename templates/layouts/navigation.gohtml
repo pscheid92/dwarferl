@@ -6,7 +6,7 @@
         </a>
 
         <nav class="my-2 my-md-0 mr-md-3">
-            <a class="nav-link p-2 text-dark" href="{{$.linkPrefix}}logout/google">Logout</a>
+            {{ if .userID }}<a class="nav-link p-2 text-dark" href="{{$.linkPrefix}}logout/google">Logout</a>{{ end }}
         </nav>
 
         <a class="btn btn-primary ms-3" href="{{$.linkPrefix}}create">Shorten</a>

@@ -1,15 +1,10 @@
 {{define "content"}}
-    {{ if .userID }}
-        <p>Hello {{ .userID }}!</p>
-        <a href="{{$.linkPrefix}}logout/google">Logout</a>
-    {{ else }}
-        <div class="text-center">
-            <a class="btn btn-outline-primary btn-lg" href="{{$.linkPrefix}}auth/google" role="button">
-                <img src="{{$.linkPrefix}}assets/google_signin.svg" alt="google signin button">
-                <span class="align-middle">Login with Google</span>
-            </a>
-        </div>
-    {{ end }}
+    <div class="text-center">
+        <a class="btn btn-outline-primary btn-lg" href="{{$.linkPrefix}}auth/google" role="button">
+            <img src="{{$.linkPrefix}}assets/google_signin.svg" alt="google signin button">
+            <span class="align-middle">Login with Google</span>
+        </a>
+    </div>
 {{end}}
 
 {{template "base" .}}

@@ -51,9 +51,17 @@ func TestHandleRedirect(t *testing.T) {
 }
 
 func TestHandleGetLoginPage(t *testing.T) {
-	srv, _, _ := setupTestServer()
-	w := srv.call("GET", "/login", "", nil)
-	assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d %v", w.Code, w)
+	srv, cookies, _ := setupTestServer()
+
+	t.Run("login page serves successfully if not logged in", func(t *testing.T) {
+		w := srv.call("GET", "/login", "", nil)
+		assert.Equalf(t, http.StatusOK, w.Code, "Expected status code to be 200, got %d %v", w.Code, w)
+	})
+
+	t.Run("login page redirects to homepage if already logged in", func(t *testing.T) {
+		w := srv.call("GET", "/login", "", cookies)
+		assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d %v", w.Code, w)
+	})
 }
 
 func TestHandleIndexPage(t *testing.T) {
