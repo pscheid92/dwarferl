@@ -19,7 +19,7 @@ spec:
         - name: dockerconfigjson-github-com
       containers:
         - name: dwarferl
-          image: "ghcr.io/pscheid92/dwarferl/dwarferl:{{ required "Set valid .Values.imageVersion entry!" .Values.imageVersion }}"
+          image: "ghcr.io/pscheid92/dwarferl:{{ required "Set valid .Values.imageVersion entry!" .Values.imageVersion }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
