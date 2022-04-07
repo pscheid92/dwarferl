@@ -1,8 +1,10 @@
-
 {{define "content"}}
-    <h1>Do you want to delete this short URL?</h1>
-    <form method="POST">
-        <input type="submit" value="Confirm">
+    <h3>Do you want to delete this short link?</h3>
+
+
+    <form method="post" class="pt-2">
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a class="btn btn-outline-secondary" href="{{$.linkPrefix}}" role="button">Abort</a>
     </form>
 {{end}}
 
