@@ -10,6 +10,7 @@ type Configuration struct {
 	ForwardedPrefix   string `mapstructure:"forwarded_prefix"`
 	SessionSecret     string `mapstructure:"session_secret"`
 	TemplatePath      string `mapstructure:"template_path"`
+	AssetsPath        string `mapstructure:"assets_path"`
 	GoogleClientKey   string `mapstructure:"google_client_key"`
 	GoogleSecret      string `mapstructure:"google_secret"`
 	GoogleCallbackURL string `mapstructure:"google_callback_url"`
@@ -22,8 +23,9 @@ func GatherConfig() (Configuration, error) {
 	// session secret
 	viper.SetDefault("session_secret", "secret")
 
-	// template path
+	// fs paths
 	viper.SetDefault("template_path", "templates")
+	viper.SetDefault("assets_path", "assets")
 
 	// google login settings
 	viper.SetDefault("google_client_key", "")

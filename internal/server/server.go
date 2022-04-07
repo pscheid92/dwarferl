@@ -75,6 +75,8 @@ func (s *Server) InitRoutes() {
 	// public routes
 	public := s.Group(s.Config.ForwardedPrefix)
 	{
+		public.Static("/assets", s.Config.AssetsPath)
+
 		public.GET("/health", s.handleHealth())
 		public.GET("/:short", s.handleRedirect())
 
