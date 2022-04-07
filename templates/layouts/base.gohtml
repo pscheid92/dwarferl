@@ -18,14 +18,25 @@
 <body>
 
 <div class="container">
+    <!-- navigation -->
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
         {{template "navigation" .}}
     </header>
+
+    <!-- main content -->
     <main>
         {{template "content" .}}
     </main>
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-        {{template "footer" .}}
+
+    <!-- footer -->
+    <footer>
+        <div class="container fixed-bottom d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+        <p class="col-md-4 mb-0 text-muted">&copy; 2022 Patrick Scheid</p>
+        <ul class="nav col-md-4 justify-content-end">
+            <li class="nav-item"><a href="{{$.linkPrefix}}" class="nav-link px-2 text-muted"><img src="{{$.linkPrefix}}assets/logo.webp" alt="home button" width="24" height="24" class="d-inline-block align-text-top"></a></li>
+            <li class="nav-item"><a href="https://github.com/pscheid92/dwarferl" class="nav-link px-2 text-muted"><img src="{{$.linkPrefix}}assets/github_mark.webp" alt="link to github project page" width="24" height="24" class="d-inline-block align-text-top"></a></li>
+        </ul>
+        </div>
     </footer>
 </div>
 
