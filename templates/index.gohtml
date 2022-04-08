@@ -15,7 +15,7 @@
                     <div class="card-body">
                         <p class="card-title"><a href="{{$redirect.URL}}">{{  $redirect.URL }}</a></p>
                         <p class="card-text">Created: {{ .CreatedAt.Format "Mon Jan 2 15:04:05 MST 2006" }}</p>
-                        <a href="{{$.linkPrefix}}delete/{{ $redirect.Short }}" class="btn btn-danger" role="button">Delete</a>
+                        <a href="{{$.linkPrefix}}delete/{{ $redirect.Short }}" target="_blank" class="btn btn-danger" role="button">Delete</a>
                     </div>
                 </div>
             </div>
