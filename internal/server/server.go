@@ -300,6 +300,7 @@ func (s *Server) authRequiredMiddleware() gin.HandlerFunc {
 		userID := session.Get("user_id")
 		if userID == nil {
 			c.Redirect(http.StatusFound, loginPage)
+			c.Abort()
 			return
 		}
 
