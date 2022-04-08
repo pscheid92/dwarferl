@@ -1,14 +1,30 @@
 {{define "navigation"}}
-    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 border-bottom box-shadow">
-        <a href="{{$.linkPrefix}}" class="navbar-brand mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-            <img src="{{$.linkPrefix}}assets/logo.webp" alt="logo" width="24" height="24" class="d-inline-block align-text-top">
-            <span class="px-2 fs-4">dwarferl</span>
-        </a>
+    <!--  d-flex flex-column flex-md-row  navbar-expand-->
+    <nav class="navbar navbar-expand-md navbar-light p-md-3 px-md-4 border-bottom box-shadow">
+        <div class="container-fluid ">
+            <!-- brand: logo and text -->
+            <a class="navbar-brand text-dark text-decoration-none" href="{{$.linkPrefix}}">
+                <img src="{{$.linkPrefix}}assets/logo.webp" alt="logo" width="24" height="24" class="d-inline-block align-text-top">
+                <span class="px-2 fs-4">dwarferl</span>
+            </a>
 
-        <nav class="my-2 my-md-0 mr-md-3">
-            {{ if .userID }}<a class="nav-link p-2 text-dark" href="{{$.linkPrefix}}logout/google">Logout</a>{{ end }}
-        </nav>
 
-        <a class="btn btn-primary ms-3" href="{{$.linkPrefix}}create">Shorten</a>
-    </div>
+            <!-- toggle button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-link-region">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- navbar links -->
+            <div class="collapse navbar-collapse" id="navbar-link-region">
+                <ul class="navbar-nav ms-md-auto">
+                    {{ if .userID }}
+                        <li class="nav-item"><a class="nav-link p-2 text-dark" href="{{$.linkPrefix}}logout/google">Logout</a></li>
+                    {{end}}
+
+                    <!-- call to action -->
+                    <a class="btn btn-primary ms-md-3" href="{{$.linkPrefix}}create">Shorten</a>
+                </ul>
+            </div>
+        </div>
+    </nav>
 {{end}}
