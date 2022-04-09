@@ -20,6 +20,7 @@ spec:
       containers:
         - name: dwarferl
           image: "ghcr.io/pscheid92/dwarferl:{{ required "Set valid .Values.imageVersion entry!" .Values.imageVersion }}"
+          imagePullPolicy: Always
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
