@@ -160,7 +160,6 @@ func TestHandlePostDeletionPage(t *testing.T) {
 func setupTestServer() (*Server, []*http.Cookie, *urlShortenerServiceFake) {
 	c := config.Configuration{
 		ForwardedPrefix: "/",
-		SessionSecret:   "test_secret",
 		TemplatePath:    "../../templates",
 	}
 
