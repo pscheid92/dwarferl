@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -15,14 +16,14 @@ func NewService(repository internal.UsersRepository) *Service {
 	return &Service{repository: repository}
 }
 
-func (s *Service) CreateWithGoogleID(googleID string, email string) (internal.User, error) {
+func (s *Service) CreateWithGoogleID(ctx context.Context, googleID string, email string) (internal.User, error) {
 	user := internal.User{
 		ID:       uuid.New().String(),
 		Email:    email,
 		GoogleID: googleID,
 	}
 
-	err := s.repository.Save(user)
+	err := s.repository.Save(ctx, user)
 	if err != nil {
 		return internal.User{}, err
 	}
@@ -30,8 +31,8 @@ func (s *Service) CreateWithGoogleID(googleID string, email string) (internal.Us
 	return user, nil
 }
 
-func (s *Service) GetOrCreateByGoogle(googleID string, email string) (internal.User, error) {
-	user, err := s.repository.GetByGoogleID(googleID)
+func (s *Service) GetOrCreateByGoogle(ctx context.Context, googleID string, email string) (internal.User, error) {
+	user, err := s.repository.GetByGoogleID(ctx, googleID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return internal.User{}, err
 	}
@@ -41,5 +42,5 @@ func (s *Service) GetOrCreateByGoogle(googleID string, email string) (internal.U
 		return user, nil
 	}
 
-	return s.CreateWithGoogleID(googleID, email)
+	return s.CreateWithGoogleID(ctx, googleID, email)
 }

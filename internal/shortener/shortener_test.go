@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"errors"
 	"github.com/pscheid92/dwarferl/internal"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +17,12 @@ const (
 func TestUrlShortenerService_List(t *testing.T) {
 	redirects, sut := setupService()
 
-	list, err := sut.List(testUser)
+	list, err := sut.List(context.Background(), testUser)
 	assert.NoErrorf(t, err, "list should not return error")
 	assert.Emptyf(t, list, "list should return empty list")
 
 	redirects.FailMode = true
-	_, err = sut.List(testUser)
+	_, err = sut.List(context.Background(), testUser)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
@@ -29,69 +30,69 @@ func TestUrlShortenerService_GetRedirectByShort(t *testing.T) {
 	redirects, sut := setupService()
 
 	// correct user and short
-	redirect, err := sut.GetRedirectByShort("short", testUser)
+	redirect, err := sut.GetRedirectByShort(context.Background(), "short", testUser)
 	assert.NoErrorf(t, err, "get redirect by short should not return error")
 	assert.Equalf(t, testURL, redirect.URL, "get redirect by short should return correct redirect")
 	assert.Equalf(t, testUser, redirect.UserID, "get redirect by short should return correct redirect")
 
 	// false user correct short
-	redirect, err = sut.GetRedirectByShort("short", "nonexistent")
+	redirect, err = sut.GetRedirectByShort(context.Background(), "short", "nonexistent")
 	assert.Errorf(t, err, "Expected error, got nil")
 
 	// user and false short
-	redirect, err = sut.GetRedirectByShort("nonexistent", testUser)
+	redirect, err = sut.GetRedirectByShort(context.Background(), "nonexistent", testUser)
 	assert.Errorf(t, err, "Expected error, got nil")
 
 	// error
 	redirects.FailMode = true
-	_, err = sut.GetRedirectByShort("short", testUser)
+	_, err = sut.GetRedirectByShort(context.Background(), "short", testUser)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestUrlShortenerService_ShortenURL(t *testing.T) {
 	repo, sut := setupService()
 
-	redirect, err := sut.ShortenURL(testURL, testUser)
+	redirect, err := sut.ShortenURL(context.Background(), testURL, testUser)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.Equalf(t, "short", redirect.Short, "Expected short to be short, got %v", redirect.Short)
 
-	expanded, err := repo.Expand(redirect.Short)
+	expanded, err := repo.Expand(context.Background(), redirect.Short)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.Equalf(t, testURL, expanded, "Expected redirect to be expanded to %s, got %s", testURL, expanded)
 
 	repo.FailMode = true
-	_, err = sut.ShortenURL(testURL, testUser)
+	_, err = sut.ShortenURL(context.Background(), testURL, testUser)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 	repo, sut := setupService()
 
-	redirect, err := sut.ShortenURL(testURL, testUser)
+	redirect, err := sut.ShortenURL(context.Background(), testURL, testUser)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
-	expanded, err := sut.ExpandShortURL(redirect.Short)
+	expanded, err := sut.ExpandShortURL(context.Background(), redirect.Short)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.Equalf(t, testURL, expanded, "Expected %s to be expanded to %s, got %s", redirect.Short, testURL, expanded)
 
 	repo.FailMode = true
-	_, err = sut.ExpandShortURL(redirect.Short)
+	_, err = sut.ExpandShortURL(context.Background(), redirect.Short)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 	repo, sut := setupService()
 
-	redirect, err := sut.ShortenURL(testURL, testUser)
+	redirect, err := sut.ShortenURL(context.Background(), testURL, testUser)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
-	_, err = repo.Expand(redirect.Short)
+	_, err = repo.Expand(context.Background(), redirect.Short)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
-	err = sut.DeleteShortURL(redirect.Short, testUser)
+	err = sut.DeleteShortURL(context.Background(), redirect.Short, testUser)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
-	_, err = repo.Expand(redirect.Short)
+	_, err = repo.Expand(context.Background(), redirect.Short)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
@@ -114,7 +115,7 @@ func newRedirectRepoFake() *redirectRepoFake {
 	}
 }
 
-func (r redirectRepoFake) List(user string) ([]internal.Redirect, error) {
+func (r redirectRepoFake) List(context.Context, string) ([]internal.Redirect, error) {
 	if r.FailMode {
 		return nil, errors.New("fake error")
 	}
@@ -126,7 +127,7 @@ func (r redirectRepoFake) List(user string) ([]internal.Redirect, error) {
 	return result, nil
 }
 
-func (r redirectRepoFake) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+func (r redirectRepoFake) GetRedirectByShort(_ context.Context, short string, userID string) (internal.Redirect, error) {
 	if r.FailMode {
 		return internal.Redirect{}, errors.New("fake error")
 	}
@@ -144,7 +145,7 @@ func (r redirectRepoFake) GetRedirectByShort(short string, userID string) (inter
 	return result, nil
 }
 
-func (r redirectRepoFake) Save(redirect internal.Redirect) error {
+func (r redirectRepoFake) Save(_ context.Context, redirect internal.Redirect) error {
 	if r.FailMode {
 		return errors.New("fake error")
 	}
@@ -152,7 +153,7 @@ func (r redirectRepoFake) Save(redirect internal.Redirect) error {
 	return nil
 }
 
-func (r redirectRepoFake) Expand(short string) (string, error) {
+func (r redirectRepoFake) Expand(_ context.Context, short string) (string, error) {
 	if r.FailMode {
 		return "", errors.New("fake error")
 	}
@@ -164,7 +165,7 @@ func (r redirectRepoFake) Expand(short string) (string, error) {
 	return url.URL, nil
 }
 
-func (r redirectRepoFake) Delete(short string, userID string) error {
+func (r redirectRepoFake) Delete(_ context.Context, short string, userID string) error {
 	if r.FailMode {
 		return errors.New("fake error")
 	}

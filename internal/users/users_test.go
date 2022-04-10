@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/pscheid92/dwarferl/internal"
@@ -17,31 +18,31 @@ const (
 func TestService_CreateWithGoogleID(t *testing.T) {
 	repo, sut := setupService()
 
-	user, err := sut.CreateWithGoogleID(testGoogleID, testEmail)
+	user, err := sut.CreateWithGoogleID(context.Background(), testGoogleID, testEmail)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.NotEmptyf(t, user.ID, "Expected user ID to be set, got %v", user.ID)
 	assert.Equalf(t, testGoogleID, user.GoogleID, "Expected GoogleID to be %v, got %v", testGoogleID, user.GoogleID)
 
 	repo.FailMode = true
-	_, err = sut.CreateWithGoogleID(testGoogleID, testEmail)
+	_, err = sut.CreateWithGoogleID(context.Background(), testGoogleID, testEmail)
 	assert.Errorf(t, err, "Expected error, got nil")
 }
 
 func TestService_GetOrCreateByGoogle(t *testing.T) {
 	repo, sut := setupService()
 
-	user, err := sut.GetOrCreateByGoogle(testGoogleID, testEmail)
+	user, err := sut.GetOrCreateByGoogle(context.Background(), testGoogleID, testEmail)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.Equalf(t, testUser, user.ID, "Expected user ID to be %v, got %v", testUser, user.ID)
 
-	user, err = sut.GetOrCreateByGoogle("nonexistent", testEmail)
+	user, err = sut.GetOrCreateByGoogle(context.Background(), "nonexistent", testEmail)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 	assert.NotEmptyf(t, user.ID, "Expected user ID to be set, got %v", user.ID)
 	assert.Equalf(t, testEmail, user.Email, "Expected user email to be %v, got %v", testEmail, user.Email)
 	assert.Equalf(t, "nonexistent", user.GoogleID, "Expected GoogleID to be %v, got %v", "nonexistent", user.GoogleID)
 
 	repo.FailMode = true
-	_, err = sut.GetOrCreateByGoogle(testGoogleID, testEmail)
+	_, err = sut.GetOrCreateByGoogle(context.Background(), testGoogleID, testEmail)
 	assert.Errorf(t, err, "Expected error, got nil")
 	assert.NotErrorIsf(t, err, pgx.ErrNoRows, "Expected error to not be %v, got %v", pgx.ErrNoRows, err)
 }
@@ -56,14 +57,14 @@ type usersRepositoryFake struct {
 	FailMode bool
 }
 
-func (u usersRepositoryFake) Save(_ internal.User) error {
+func (u usersRepositoryFake) Save(context.Context, internal.User) error {
 	if u.FailMode {
 		return errors.New("fake error")
 	}
 	return nil
 }
 
-func (u usersRepositoryFake) GetByGoogleID(googleID string) (internal.User, error) {
+func (u usersRepositoryFake) GetByGoogleID(_ context.Context, googleID string) (internal.User, error) {
 	if u.FailMode {
 		return internal.User{}, errors.New("fake error")
 	}

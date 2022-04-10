@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"github.com/pscheid92/dwarferl/internal"
 	"time"
 )
@@ -17,8 +18,8 @@ func NewUrlShortenerService(hasher internal.Hasher, redirects internal.RedirectR
 	}
 }
 
-func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
-	list, err := u.redirects.List(userID)
+func (u UrlShortenerService) List(ctx context.Context, userID string) ([]internal.Redirect, error) {
+	list, err := u.redirects.List(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,15 +27,15 @@ func (u UrlShortenerService) List(userID string) ([]internal.Redirect, error) {
 	return list, nil
 }
 
-func (u UrlShortenerService) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
-	redirect, err := u.redirects.GetRedirectByShort(short, userID)
+func (u UrlShortenerService) GetRedirectByShort(ctx context.Context, short string, userID string) (internal.Redirect, error) {
+	redirect, err := u.redirects.GetRedirectByShort(ctx, short, userID)
 	if err != nil {
 		return internal.Redirect{}, err
 	}
 	return redirect, nil
 }
 
-func (u UrlShortenerService) ShortenURL(url string, userID string) (internal.Redirect, error) {
+func (u UrlShortenerService) ShortenURL(ctx context.Context, url string, userID string) (internal.Redirect, error) {
 	redirect := internal.Redirect{
 		UserID:    userID,
 		Short:     u.hasher(userID, url),
@@ -42,20 +43,20 @@ func (u UrlShortenerService) ShortenURL(url string, userID string) (internal.Red
 		CreatedAt: time.Now(),
 	}
 
-	if err := u.redirects.Save(redirect); err != nil {
+	if err := u.redirects.Save(ctx, redirect); err != nil {
 		return redirect, err
 	}
 	return redirect, nil
 }
 
-func (u UrlShortenerService) ExpandShortURL(short string) (string, error) {
-	redirect, err := u.redirects.Expand(short)
+func (u UrlShortenerService) ExpandShortURL(ctx context.Context, short string) (string, error) {
+	redirect, err := u.redirects.Expand(ctx, short)
 	if err != nil {
 		return "", err
 	}
 	return redirect, nil
 }
 
-func (u UrlShortenerService) DeleteShortURL(short string, userID string) error {
-	return u.redirects.Delete(short, userID)
+func (u UrlShortenerService) DeleteShortURL(ctx context.Context, short string, userID string) error {
+	return u.redirects.Delete(ctx, short, userID)
 }

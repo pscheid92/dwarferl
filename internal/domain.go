@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"time"
 )
 
@@ -20,27 +21,27 @@ type Redirect struct {
 }
 
 type UsersRepository interface {
-	Save(user User) error
-	GetByGoogleID(googleID string) (User, error)
+	Save(ctx context.Context, user User) error
+	GetByGoogleID(ctx context.Context, googleID string) (User, error)
 }
 
 type RedirectRepository interface {
-	List(userID string) ([]Redirect, error)
-	GetRedirectByShort(short string, userID string) (Redirect, error)
-	Save(redirect Redirect) error
-	Expand(short string) (string, error)
-	Delete(short string, userID string) error
+	List(ctx context.Context, userID string) ([]Redirect, error)
+	GetRedirectByShort(ctx context.Context, short string, userID string) (Redirect, error)
+	Save(ctx context.Context, redirect Redirect) error
+	Expand(ctx context.Context, short string) (string, error)
+	Delete(ctx context.Context, short string, userID string) error
 }
 
 type UrlShortenerService interface {
-	List(userID string) ([]Redirect, error)
-	GetRedirectByShort(short string, userID string) (Redirect, error)
-	ShortenURL(url string, userID string) (Redirect, error)
-	ExpandShortURL(short string) (string, error)
-	DeleteShortURL(short string, userID string) error
+	List(ctx context.Context, userID string) ([]Redirect, error)
+	GetRedirectByShort(ctx context.Context, short string, userID string) (Redirect, error)
+	ShortenURL(ctx context.Context, url string, userID string) (Redirect, error)
+	ExpandShortURL(ctx context.Context, short string) (string, error)
+	DeleteShortURL(ctx context.Context, short string, userID string) error
 }
 
 type UsersService interface {
-	CreateWithGoogleID(googleID string, email string) (User, error)
-	GetOrCreateByGoogle(googleID string, email string) (User, error)
+	CreateWithGoogleID(ctx context.Context, googleID string, email string) (User, error)
+	GetOrCreateByGoogle(ctx context.Context, googleID string, email string) (User, error)
 }

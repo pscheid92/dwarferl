@@ -118,7 +118,8 @@ func (s *Server) handleRedirect() gin.HandlerFunc {
 			return
 		}
 
-		redirect, err := s.Shortener.ExpandShortURL(short)
+		ctx := c.Request.Context()
+		redirect, err := s.Shortener.ExpandShortURL(ctx, short)
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
@@ -156,7 +157,8 @@ func (s *Server) handleAuthCallback() gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.Users.GetOrCreateByGoogle(externalUser.UserID, externalUser.Email)
+		ctx := c.Request.Context()
+		user, err := s.Users.GetOrCreateByGoogle(ctx, externalUser.UserID, externalUser.Email)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -215,7 +217,8 @@ func (s *Server) handleIndexPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetString("user_id")
 
-		list, err := s.Shortener.List(userID)
+		ctx := c.Request.Context()
+		list, err := s.Shortener.List(ctx, userID)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -258,8 +261,9 @@ func (s *Server) handlePostCreationPage() gin.HandlerFunc {
 			return
 		}
 
+		ctx := c.Request.Context()
 		userID := c.GetString("user_id")
-		if _, err := s.Shortener.ShortenURL(req.Url, userID); err != nil {
+		if _, err := s.Shortener.ShortenURL(ctx, req.Url, userID); err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -273,7 +277,8 @@ func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 		short := c.Param("short")
 		userID := c.GetString("user_id")
 
-		redirect, err := s.Shortener.GetRedirectByShort(short, userID)
+		ctx := c.Request.Context()
+		redirect, err := s.Shortener.GetRedirectByShort(ctx, short, userID)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -290,9 +295,10 @@ func (s *Server) handleGetDeletionPage() gin.HandlerFunc {
 
 func (s *Server) handlePostDeletionPage() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		short := c.Param("short")
 		userID := c.GetString("user_id")
-		if err := s.Shortener.DeleteShortURL(short, userID); err != nil {
+		if err := s.Shortener.DeleteShortURL(ctx, short, userID); err != nil {
 			_ = c.AbortWithError(http.StatusNotFound, err)
 			return
 		}

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -132,7 +133,7 @@ func TestHandleGetDeletionPage(t *testing.T) {
 		assert.Equalf(t, http.StatusFound, w.Code, "Expected status code to be 302, got %d", w.Code)
 	})
 
-	t.Run("deletion of nonexistend short fails", func(t *testing.T) {
+	t.Run("deletion of nonexistent short fails", func(t *testing.T) {
 		w := srv.call("GET", "/delete/nonexistent", "", cookies)
 		assert.Equalf(t, http.StatusInternalServerError, w.Code, "Expected status code to be 500, got %d", w.Code)
 	})
@@ -217,7 +218,7 @@ type urlShortenerServiceFake struct {
 	FailMode bool
 }
 
-func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error) {
+func (s urlShortenerServiceFake) List(_ context.Context, userID string) ([]internal.Redirect, error) {
 	if s.FailMode {
 		return nil, errors.New("fake error")
 	}
@@ -236,7 +237,7 @@ func (s urlShortenerServiceFake) List(userID string) ([]internal.Redirect, error
 	return []internal.Redirect{redirect}, nil
 }
 
-func (s urlShortenerServiceFake) GetRedirectByShort(short string, userID string) (internal.Redirect, error) {
+func (s urlShortenerServiceFake) GetRedirectByShort(_ context.Context, short string, userID string) (internal.Redirect, error) {
 	if s.FailMode {
 		return internal.Redirect{}, errors.New("fake error")
 	}
@@ -254,7 +255,7 @@ func (s urlShortenerServiceFake) GetRedirectByShort(short string, userID string)
 	return redirect, nil
 }
 
-func (s urlShortenerServiceFake) ShortenURL(url string, userID string) (internal.Redirect, error) {
+func (s urlShortenerServiceFake) ShortenURL(_ context.Context, url string, _ string) (internal.Redirect, error) {
 	if s.FailMode {
 		return internal.Redirect{}, errors.New("fake error")
 	}
@@ -272,7 +273,7 @@ func (s urlShortenerServiceFake) ShortenURL(url string, userID string) (internal
 	return redirect, nil
 }
 
-func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
+func (s urlShortenerServiceFake) ExpandShortURL(_ context.Context, short string) (string, error) {
 	if s.FailMode {
 		return "", errors.New("fake error")
 	}
@@ -284,7 +285,7 @@ func (s urlShortenerServiceFake) ExpandShortURL(short string) (string, error) {
 	return testURL, nil
 }
 
-func (s urlShortenerServiceFake) DeleteShortURL(short string, userID string) error {
+func (s urlShortenerServiceFake) DeleteShortURL(_ context.Context, short string, _ string) error {
 	if s.FailMode {
 		return errors.New("fake error")
 	}
@@ -300,13 +301,13 @@ type usersServiceFake struct {
 	FailMode bool
 }
 
-func (u usersServiceFake) CreateWithGoogleID(googleID string, email string) (internal.User, error) {
+func (u usersServiceFake) CreateWithGoogleID(context.Context, string, string) (internal.User, error) {
 	// TODO: find a way to test goth/gothic
 	// Not implemented, since we cannot test goth/gothic here
 	panic("create with google id - implement me")
 }
 
-func (u usersServiceFake) GetOrCreateByGoogle(googleID string, email string) (internal.User, error) {
+func (u usersServiceFake) GetOrCreateByGoogle(context.Context, string, string) (internal.User, error) {
 	// TODO: find a way to test goth/gothic
 	// Not implemented, since we cannot test goth/gothic here
 	panic("get or create by google - implement me")

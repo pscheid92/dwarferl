@@ -15,16 +15,16 @@ func NewDBUsersRepository(pool *pgxpool.Pool) *DBUsersRepository {
 	return &DBUsersRepository{queries: database.New(pool)}
 }
 
-func (d *DBUsersRepository) Save(user internal.User) error {
-	return d.queries.SaveUser(context.Background(), database.SaveUserParams{
+func (d *DBUsersRepository) Save(ctx context.Context, user internal.User) error {
+	return d.queries.SaveUser(ctx, database.SaveUserParams{
 		ID:               user.ID,
 		Email:            user.Email,
 		GoogleProviderID: user.GoogleID,
 	})
 }
 
-func (d *DBUsersRepository) GetByGoogleID(googleID string) (internal.User, error) {
-	userDTO, err := d.queries.GetUserByGoogleId(context.Background(), googleID)
+func (d *DBUsersRepository) GetByGoogleID(ctx context.Context, googleID string) (internal.User, error) {
+	userDTO, err := d.queries.GetUserByGoogleId(ctx, googleID)
 	if err != nil {
 		return internal.User{}, err
 	}
