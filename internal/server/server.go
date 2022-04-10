@@ -37,6 +37,7 @@ func New(config config.Configuration, store sessions.Store, shortener internal.U
 	}
 
 	goth.UseProviders(google.New(config.GoogleClientKey, config.GoogleSecret, config.GoogleCallbackURL))
+	_ = svr.SetTrustedProxies(nil)
 	svr.initHTMLRender()
 	return svr
 }
