@@ -109,7 +109,7 @@ func (s *Server) handleHealth() gin.HandlerFunc {
 }
 
 func (s *Server) handleRedirect() gin.HandlerFunc {
-	validShortRegex := regexp.MustCompilePOSIX(`^[A-Za-z0-9]+$`)
+	validShortRegex := regexp.MustCompile(`^[A-Za-z\d]+$`)
 
 	return func(c *gin.Context) {
 		short := c.Param("short")
