@@ -38,7 +38,7 @@ func TestHandleRedirect(t *testing.T) {
 
 	t.Run("invalid characters are rejected", func(t *testing.T) {
 		w := srv.call("GET", "/falséy", "", nil)
-		assert.Equalf(t, http.StatusBadRequest, w.Code, "Expected status code to be 400, got %d", w.Code)
+		assert.Equalf(t, http.StatusNotFound, w.Code, "Expected status code to be 400, got %d", w.Code)
 	})
 
 	t.Run("redirect successfully", func(t *testing.T) {

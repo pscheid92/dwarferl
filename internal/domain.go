@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-type Hasher = func(string, string) string
-
 type User struct {
 	ID       string
 	Email    string
@@ -18,6 +16,11 @@ type Redirect struct {
 	URL       string
 	UserID    string
 	CreatedAt time.Time
+}
+
+type Hasher interface {
+	Hash(userID string, url string) string
+	Validate(short string) bool
 }
 
 type UsersRepository interface {

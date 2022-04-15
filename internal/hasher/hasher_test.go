@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestUrlHasher(t *testing.T) {
+func TestUrlHasher_Hash(t *testing.T) {
 	tt := []struct {
 		userID string
 		url    string
@@ -23,8 +23,31 @@ func TestUrlHasher(t *testing.T) {
 		},
 	}
 
+	hasher := NewUrlHasher()
+
 	for _, c := range tt {
-		result := UrlHasher(c.userID, c.url)
-		assert.Equalf(t, c.short, result, "UrlHasher(%v, %s) should be %s, but is %s", c.userID, c.url, c.short, result)
+		result := hasher.Hash(c.userID, c.url)
+		assert.Equalf(t, c.short, result, "hash of (%v, %s) should be %s, but is %s", c.userID, c.url, c.short, result)
+	}
+}
+
+func TestUrlHasher_Validate(t *testing.T) {
+	tt := []struct {
+		short    string
+		expected bool
+	}{
+		{"hYhahA", true},
+		{"5fLDtC", true},
+		{"", false},
+		{"falséy", false},
+		{"short", false},
+		{"toolong", false},
+	}
+
+	hasher := NewUrlHasher()
+
+	for _, c := range tt {
+		result := hasher.Validate(c.short)
+		assert.Equalf(t, c.expected, result, "validation of '%v' should be %t, but is %t", c.short, c.expected, result)
 	}
 }

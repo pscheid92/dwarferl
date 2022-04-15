@@ -12,7 +12,6 @@ import (
 	"github.com/pscheid92/dwarferl/internal/config"
 	"net/http"
 	"path/filepath"
-	"regexp"
 )
 
 type Server struct {
@@ -109,16 +108,9 @@ func (s *Server) handleHealth() gin.HandlerFunc {
 }
 
 func (s *Server) handleRedirect() gin.HandlerFunc {
-	validShortRegex := regexp.MustCompile(`^[A-Za-z\d]+$`)
-
 	return func(c *gin.Context) {
-		short := c.Param("short")
-		if short == "" || !validShortRegex.MatchString(short) {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-
 		ctx := c.Request.Context()
+		short := c.Param("short")
 		redirect, err := s.Shortener.ExpandShortURL(ctx, short)
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)

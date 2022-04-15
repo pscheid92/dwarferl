@@ -30,8 +30,9 @@ func main() {
 	sessionStore := cookie.NewStore([]byte(conf.SessionSecret))
 	gothic.Store = cookie.NewStore([]byte(conf.SessionSecret))
 
+	hasher := hasher.NewUrlHasher()
 	redirectsRepository := repository.NewDBRedirectsRepository(pool)
-	urlShortener := shortener.NewUrlShortenerService(hasher.UrlHasher, redirectsRepository)
+	urlShortener := shortener.NewUrlShortenerService(hasher, redirectsRepository)
 
 	usersRepository := repository.NewDBUsersRepository(pool)
 	usersService := users.NewService(usersRepository)

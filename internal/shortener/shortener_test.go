@@ -29,6 +29,10 @@ func TestUrlShortenerService_List(t *testing.T) {
 func TestUrlShortenerService_GetRedirectByShort(t *testing.T) {
 	redirects, sut := setupService()
 
+	// invalid short
+	_, err := sut.GetRedirectByShort(context.Background(), "invalid", testUser)
+	assert.Error(t, err, "Expected error, got nil")
+
 	// correct user and short
 	redirect, err := sut.GetRedirectByShort(context.Background(), "short", testUser)
 	assert.NoErrorf(t, err, "get redirect by short should not return error")
@@ -68,6 +72,9 @@ func TestUrlShortenerService_ShortenURL(t *testing.T) {
 func TestUrlShortenerService_ExpandShortURL(t *testing.T) {
 	repo, sut := setupService()
 
+	_, err := sut.GetRedirectByShort(context.Background(), "invalid", testUser)
+	assert.Error(t, err, "Expected error, got nil")
+
 	redirect, err := sut.ShortenURL(context.Background(), testURL, testUser)
 	assert.NoErrorf(t, err, "Expected no error, got %v", err)
 
@@ -97,7 +104,7 @@ func TestUrlShortenerService_DeleteShortURL(t *testing.T) {
 }
 
 func setupService() (*redirectRepoFake, *UrlShortenerService) {
-	hasher := func(_ string, _ string) string { return "short" }
+	hasher := newHasherFake()
 	redirects := newRedirectRepoFake()
 	svc := NewUrlShortenerService(hasher, redirects)
 	return redirects, &svc
@@ -165,7 +172,7 @@ func (r redirectRepoFake) Expand(_ context.Context, short string) (string, error
 	return url.URL, nil
 }
 
-func (r redirectRepoFake) Delete(_ context.Context, short string, userID string) error {
+func (r redirectRepoFake) Delete(_ context.Context, short string, _ string) error {
 	if r.FailMode {
 		return errors.New("fake error")
 	}
@@ -174,4 +181,18 @@ func (r redirectRepoFake) Delete(_ context.Context, short string, userID string)
 	}
 	delete(r.redirects, short)
 	return nil
+}
+
+type hasherFake struct{}
+
+func newHasherFake() *hasherFake {
+	return &hasherFake{}
+}
+
+func (h hasherFake) Hash(string, string) string {
+	return "short"
+}
+
+func (h hasherFake) Validate(short string) bool {
+	return short == "short"
 }

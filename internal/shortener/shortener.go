@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"context"
+	"errors"
 	"github.com/pscheid92/dwarferl/internal"
 	"time"
 )
@@ -28,6 +29,10 @@ func (u UrlShortenerService) List(ctx context.Context, userID string) ([]interna
 }
 
 func (u UrlShortenerService) GetRedirectByShort(ctx context.Context, short string, userID string) (internal.Redirect, error) {
+	if !u.hasher.Validate(short) {
+		return internal.Redirect{}, errors.New("invalid short")
+	}
+
 	redirect, err := u.redirects.GetRedirectByShort(ctx, short, userID)
 	if err != nil {
 		return internal.Redirect{}, err
@@ -38,7 +43,7 @@ func (u UrlShortenerService) GetRedirectByShort(ctx context.Context, short strin
 func (u UrlShortenerService) ShortenURL(ctx context.Context, url string, userID string) (internal.Redirect, error) {
 	redirect := internal.Redirect{
 		UserID:    userID,
-		Short:     u.hasher(userID, url),
+		Short:     u.hasher.Hash(userID, url),
 		URL:       url,
 		CreatedAt: time.Now(),
 	}
@@ -50,6 +55,10 @@ func (u UrlShortenerService) ShortenURL(ctx context.Context, url string, userID 
 }
 
 func (u UrlShortenerService) ExpandShortURL(ctx context.Context, short string) (string, error) {
+	if !u.hasher.Validate(short) {
+		return "", errors.New("invalid short")
+	}
+
 	redirect, err := u.redirects.Expand(ctx, short)
 	if err != nil {
 		return "", err
