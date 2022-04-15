@@ -8,16 +8,16 @@ import (
 type Hasher = func(string, string) string
 
 type User struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	GoogleID string `json:"google_id"`
+	ID       string
+	Email    string
+	GoogleID string
 }
 
 type Redirect struct {
-	Short     string    `json:"short"`
-	URL       string    `json:"url"`
-	UserID    string    `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
+	Short     string
+	URL       string
+	UserID    string
+	CreatedAt time.Time
 }
 
 type UsersRepository interface {
