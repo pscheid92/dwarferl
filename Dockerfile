@@ -1,6 +1,4 @@
-FROM alpine:latest
-
-RUN apk add --no-cache libc6-compat
+FROM scratch
 
 COPY ./assets /assets
 COPY ./templates /templates

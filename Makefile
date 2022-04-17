@@ -19,3 +19,6 @@ precommit:
 
 migrate:
 	PGSERVICE=$(PGSERVICE) tern migrate -m db/migrations
+
+build-image-local:
+	docker build -t dwarferl-local:latest .
