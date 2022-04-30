@@ -8,7 +8,7 @@ COPY . .
 RUN go mod download
 RUN go mod verify
 
-RUN CGO_ENABLED=0 go build -ldflags='-w -s'
+RUN CGO_ENABLED=0 go build -tags=go_json -ldflags='-w -s'
 
 FROM scratch
 
